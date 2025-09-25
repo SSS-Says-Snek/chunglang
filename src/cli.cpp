@@ -155,7 +155,7 @@ void run_parse(std::vector<std::string>& args) {
 
         // Compile to object file
         llvm::legacy::PassManager pass;
-        auto filetype = llvm::CGFT_ObjectFile;
+        auto filetype = llvm::CodeGenFileType::ObjectFile;
 
         if (target_machine->addPassesToEmitFile(pass, dest, nullptr, filetype)) {
             llvm::errs() << "TargetMachine can't emit a file of this type";
@@ -166,8 +166,8 @@ void run_parse(std::vector<std::string>& args) {
         dest.flush();
         
         // IDK /shrug
-        system("clang++ $(llvm-config-17 --cxxflags) src/library/prelude.cpp -Iinclude -c -o chungbuild/prelude.o");
-        system((std::string{"clang++ $(llvm-config-17 --ldflags --libs) "} + output_filepath + " chungbuild/prelude.o -o chungbuild/output.out").c_str());
+        system("clang++ $(llvm-config --cxxflags) src/library/prelude.cpp -Iinclude -c -o chungbuild/prelude.o");
+        system((std::string{"clang++ $(llvm-config --ldflags --libs) "} + output_filepath + " chungbuild/prelude.o -o chungbuild/output.out").c_str());
     }
 }
 

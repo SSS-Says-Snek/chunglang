@@ -1,5 +1,7 @@
 #include "chung/utf.hpp"
 
+#include <cstdint>
+
 // def u32tostring(c):
 // 	code_points = []
 // 	if c <= 0x7F:

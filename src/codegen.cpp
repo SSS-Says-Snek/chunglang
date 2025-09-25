@@ -62,6 +62,12 @@ llvm::Value* BinaryExprAST::codegen(Context& ctx) {
         case TokenType::ADD:
             lhs_code->getType()->print(llvm::outs());
             return ctx.builder.CreateAdd(lhs_code, rhs_code);
+        case TokenType::SUB:
+            lhs_code->getType()->print(llvm::outs());
+            return ctx.builder.CreateSub(lhs_code, rhs_code);
+        case TokenType::MUL:
+            lhs_code->getType()->print(llvm::outs());
+            return ctx.builder.CreateMul(lhs_code, rhs_code);
     }
 
     std::cerr << "NOT IMPLEMENTED yet\n";

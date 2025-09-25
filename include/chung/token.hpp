@@ -3,6 +3,8 @@
 #include <iostream>
 #include <vector>
 
+#include <cstdint>
+
 #undef EOF
 
 enum class TokenType {
