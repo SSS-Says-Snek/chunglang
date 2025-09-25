@@ -1,5 +1,16 @@
-# Chunglang /ˈtʃʌŋleɪŋg/
-## A goofy language made with LLVM and C++.
+<p align="center">
+  <img src="assets/chunglang-logo.png" width=100>
+</p>
+
+<h1 align="center">Chunglang /ˈtʃʌŋleɪŋg/</h1>
+<p align="center">A goofy compiled language made with LLVM and C++.</p>
+
+<p align="center">
+    <img alt="Static Badge" src="https://img.shields.io/badge/C%2B%2B17-3776ab?style=for-the-badge&logo=c%2B%2B&logoColor=ffffff">
+    <img alt="GitHub License" src="https://img.shields.io/github/license/SSS-Says-Snek/chunglang?style=for-the-badge">
+    <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/SSS-Says-Snek/chunglang?style=for-the-badge">
+    <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/SSS-Says-Snek/chunglang?style=for-the-badge">
+</p>
 
 Chunglang aims to be a high level, fast general purpose statically compiled programming language 
 with modern syntax and programming language features. 
