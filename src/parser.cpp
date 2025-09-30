@@ -3,7 +3,6 @@
 #include <unordered_map>
 
 #include "chung/parser.hpp"
-#include "chung/stringify.hpp"
 
 #define MATCH_NO_SYNC(condition, exception_string)                   \
     if (!(current_token().condition)) {                              \
