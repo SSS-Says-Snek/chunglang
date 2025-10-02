@@ -4,6 +4,11 @@ project(Chunglang)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
+# Some random ahh warning idk
+if(POLICY CMP0075)
+    cmake_policy(SET CMP0075 NEW)
+endif()
+
 # Locate LLVM
 find_package(LLVM REQUIRED CONFIG)
 
@@ -19,7 +24,18 @@ include_directories(${LLVM_INCLUDE_DIRS})
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 add_definitions(${LLVM_DEFINITIONS_LIST})
 
-add_executable(chung src/cli.cpp src/library/prelude.cpp src/codegen.cpp src/context.cpp src/file.cpp src/lexer.cpp src/parser.cpp src/stringify.cpp src/token.cpp src/type.cpp src/utf.cpp)
+add_executable(chung
+    src/cli.cpp
+    src/library/prelude.cpp
+    src/codegen.cpp
+    src/context.cpp
+    src/file.cpp
+    src/lexer.cpp
+    src/parser.cpp
+    src/stringify.cpp
+    src/token.cpp
+    src/type.cpp
+)
 target_include_directories(chung PUBLIC include)
 
 # -lLLVM-20 !!!!

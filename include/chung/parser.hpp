@@ -1,11 +1,8 @@
 #pragma once
 
-#include <algorithm>
-
 #include "chung/ast.hpp"
 #include "chung/context.hpp"
 #include "chung/error.hpp"
-#include "chung/utf.hpp"
 
 #define VALIDATE_TOKEN(token_, type, condition)         \
     if (current_token().type == TokenType::EOF || ) {   \

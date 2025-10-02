@@ -1,7 +1,5 @@
 #include <string>
 #include <cwctype>
-#include <iostream>
-#include <sstream>
 #include <vector>
 
 #include "chung/lexer.hpp"

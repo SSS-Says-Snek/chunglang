@@ -43,7 +43,8 @@ git clone https://github.com/SSS-Says-Snek/chunglang
 3. Compile the Chunglang CLI
 
 ```bash
-clang++ src/cli.cpp src/library/prelude.cpp src/codegen.cpp src/context.cpp src/file.cpp src/lexer.cpp src/parser.cpp src/stringify.cpp src/token.cpp src/type.cpp src/utf.cpp `llvm-config --cxxflags --ldflags --system-libs --libs all` -Iinclude -fexceptions -o chung
+cmake -S . -B build
+cmake --build build
 ```
 4. The CLI is now available at `./chung`
 
