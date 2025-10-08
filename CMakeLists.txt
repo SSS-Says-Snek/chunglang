@@ -37,6 +37,7 @@ add_executable(chung
     src/type.cpp
 )
 target_include_directories(chung PUBLIC include)
+target_compile_options(chung PRIVATE -Wall -Wextra -Wpedantic)
 
 # -lLLVM-20 !!!!
 # llvm_map_components_to_libnames(llvm_libs -20)

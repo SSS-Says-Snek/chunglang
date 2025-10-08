@@ -73,19 +73,19 @@ void Parser::synchronize() {
     }
 }
 
-std::shared_ptr<ExprAST> Parser::parse_call() {
+std::unique_ptr<ExprAST> Parser::parse_call() {
     // Eat function callee
     Token callee = eat_token();
 
     // Eats '('
     match_simple(TokenType::OPEN_PARENTHESES, "Expected '(' after function callee");
-    std::vector<std::shared_ptr<ExprAST>> arguments;
+    std::vector<std::unique_ptr<ExprAST>> arguments;
 
     bool running = true;
     while (running) {
         // Is there an arg? If so, parse and append. Otherwise just skip ts and go to the switch
         if (auto argument = parse_expression()) {
-            arguments.push_back(argument);
+            arguments.push_back(std::move(argument));
         }
 
         switch (current_token().type) {
@@ -102,27 +102,27 @@ std::shared_ptr<ExprAST> Parser::parse_call() {
 
     // Eat ')'
     eat_token();
-    return std::make_shared<CallAST>(callee.text, std::move(arguments));
+    return std::make_unique<CallAST>(callee.text, std::move(arguments));
 }
 
-std::shared_ptr<ExprAST> Parser::parse_identifier() {
+std::unique_ptr<ExprAST> Parser::parse_identifier() {
     Token token = current_token();
     Token next = next_token();
 
     if (next.type != TokenType::OPEN_PARENTHESES) {
         // Eat identifier
         eat_token();
-        return std::make_shared<VariableAST>(token.text);
+        return std::make_unique<VariableAST>(token.text);
     }
 
     // A call
     return parse_call();
 }
 
-std::shared_ptr<ExprAST> Parser::parse_parentheses() {
+std::unique_ptr<ExprAST> Parser::parse_parentheses() {
     // Eat '('
     eat_token();
-    std::shared_ptr<ExprAST> expr = parse_expression();
+    std::unique_ptr<ExprAST> expr = parse_expression();
     if (!expr) {
         return nullptr;
     }
@@ -132,7 +132,7 @@ std::shared_ptr<ExprAST> Parser::parse_parentheses() {
     return expr;
 }
 
-std::shared_ptr<ExprAST> Parser::parse_bin_op(int min_op_precedence, std::shared_ptr<ExprAST> lhs) {
+std::unique_ptr<ExprAST> Parser::parse_bin_op(int min_op_precedence, std::unique_ptr<ExprAST> lhs) {
     while (true) {
         Token op = current_token();
         int op_precedence = get_op_precedence(op.type);
@@ -144,35 +144,35 @@ std::shared_ptr<ExprAST> Parser::parse_bin_op(int min_op_precedence, std::shared
 
         // Eat operator
         eat_token();
-        std::shared_ptr<ExprAST> rhs = parse_primary();
+        std::unique_ptr<ExprAST> rhs = parse_primary();
 
         int next_op_precedence = get_op_precedence(current_token().type);
         if (op_precedence < next_op_precedence) {
             rhs = parse_bin_op(min_op_precedence + 1, std::move(rhs));
         }
 
-        lhs = std::make_shared<BinaryExprAST>(op.type, std::move(lhs), std::move(rhs));
+        lhs = std::make_unique<BinaryExprAST>(op.type, std::move(lhs), std::move(rhs));
     }
 }
 
-std::shared_ptr<ExprAST> Parser::parse_primitive() {
+std::unique_ptr<ExprAST> Parser::parse_primitive() {
     Token token = eat_token();
 
     switch (token.type) {
         case TokenType::INT64: {
             int64_t int64 = std::stoll(token.text);
-            return std::make_shared<PrimitiveAST>(int64);
+            return std::make_unique<PrimitiveAST>(int64);
         }
         case TokenType::UINT64: {
             uint64_t uint64 = std::stoull(token.text);
-            return std::make_shared<PrimitiveAST>(uint64);
+            return std::make_unique<PrimitiveAST>(uint64);
         }
         case TokenType::FLOAT64: {
             double float64 = std::stod(token.text);
-            return std::make_shared<PrimitiveAST>(float64);
+            return std::make_unique<PrimitiveAST>(float64);
         }
         case TokenType::STRING: {
-            return std::make_shared<PrimitiveAST>(token.text);
+            return std::make_unique<PrimitiveAST>(token.text);
         }
         default:
             // Invalid token
@@ -180,7 +180,7 @@ std::shared_ptr<ExprAST> Parser::parse_primitive() {
     }
 }
 
-std::shared_ptr<ExprAST> Parser::parse_primary() {
+std::unique_ptr<ExprAST> Parser::parse_primary() {
     Token token = current_token();
     if (token.type == TokenType::IDENTIFIER) {
         return parse_identifier();
@@ -195,11 +195,11 @@ std::shared_ptr<ExprAST> Parser::parse_primary() {
     }
 }
 
-std::vector<std::shared_ptr<StmtAST>> Parser::parse_block() {
+std::vector<std::unique_ptr<StmtAST>> Parser::parse_block() {
     // Eat '{'
     match_simple(TokenType::OPEN_BRACES, "Expected '{' at start of block");
 
-    std::vector<std::shared_ptr<StmtAST>> statements;
+    std::vector<std::unique_ptr<StmtAST>> statements;
     while (current_token().type != TokenType::CLOSE_BRACES) {
         if (current_token().type == TokenType::EOF) {
             throw push_exception("Expected '}', got EOF. You probably forgot to close the block", current_token());
@@ -217,7 +217,7 @@ std::vector<std::shared_ptr<StmtAST>> Parser::parse_block() {
     return statements;
 }
 
-std::shared_ptr<StmtAST> Parser::parse_var_declaration() {
+std::unique_ptr<StmtAST> Parser::parse_var_declaration() {
     // Eat 'let'
     eat_token();
 
@@ -228,7 +228,7 @@ std::shared_ptr<StmtAST> Parser::parse_var_declaration() {
     }
     eat_token();
     
-    std::shared_ptr<ExprAST> expr = std::make_shared<PrimitiveAST>();
+    std::unique_ptr<ExprAST> expr = std::make_unique<PrimitiveAST>();
     if (current_token().type == TokenType::ASSIGN) {
         // Eat '='
         eat_token();
@@ -242,10 +242,10 @@ std::shared_ptr<StmtAST> Parser::parse_var_declaration() {
     match_simple(TokenType::SEMICOLON, "Expected ';' after identifier");
 
     // FOR NOW
-    return std::make_shared<VarDeclareAST>(identifier.text, Type::tnone, std::move(expr));
+    return std::make_unique<VarDeclareAST>(identifier.text, Type::tnone, std::move(expr));
 }
 
-std::shared_ptr<StmtAST> Parser::parse_function() {
+std::unique_ptr<StmtAST> Parser::parse_function() {
     // Eat 'def'
     eat_token();
 
@@ -289,15 +289,14 @@ std::shared_ptr<StmtAST> Parser::parse_function() {
     // Eat ')'
     match_simple(TokenType::CLOSE_PARENTHESES, "Expected ')' after parameter list");
 
-    std::vector<std::shared_ptr<StmtAST>> body = parse_block();
-    return std::make_shared<FunctionAST>(name.text, parameters, body);
+    return std::make_unique<FunctionAST>(name.text, std::move(parameters), parse_block()); // parse_block() -> body
 }
 
-std::shared_ptr<StmtAST> Parser::parse_omg() {
+std::unique_ptr<StmtAST> Parser::parse_omg() {
     // Eat '__omg'
     eat_token();
 
-    std::shared_ptr<ExprAST> expr = parse_expression();
+    std::unique_ptr<ExprAST> expr = parse_expression();
     if (!expr) {
         return nullptr;
     }
@@ -305,11 +304,11 @@ std::shared_ptr<StmtAST> Parser::parse_omg() {
     // Eat ';'
     match_simple(TokenType::SEMICOLON, "Expected ';' after value");
 
-    return std::make_shared<OmgAST>(expr);
+    return std::make_unique<OmgAST>(std::move(expr));
 }
 
-std::shared_ptr<ExprAST> Parser::parse_expression() {
-    std::shared_ptr<ExprAST> lhs = parse_primary();
+std::unique_ptr<ExprAST> Parser::parse_expression() {
+    std::unique_ptr<ExprAST> lhs = parse_primary();
     if (lhs == nullptr) {
         return nullptr;
     }
@@ -317,8 +316,8 @@ std::shared_ptr<ExprAST> Parser::parse_expression() {
     return parse_bin_op(0, std::move(lhs));
 }
 
-std::shared_ptr<StmtAST> Parser::parse_expression_statement() {
-    std::shared_ptr<ExprAST> expr = parse_expression();
+std::unique_ptr<StmtAST> Parser::parse_expression_statement() {
+    std::unique_ptr<ExprAST> expr = parse_expression();
 
     // Eat ';'
     match_simple(TokenType::SEMICOLON, "Expected ';' after expression");
@@ -327,10 +326,10 @@ std::shared_ptr<StmtAST> Parser::parse_expression_statement() {
         return nullptr;
     }
 
-    return std::make_shared<ExprStmtAST>(expr);
+    return std::make_unique<ExprStmtAST>(std::move(expr));
 }
 
-std::shared_ptr<StmtAST> Parser::parse_statement() {
+std::unique_ptr<StmtAST> Parser::parse_statement() {
     try {
         Token token = current_token();
         if (is_keyword(token.type)) {
@@ -353,13 +352,13 @@ std::shared_ptr<StmtAST> Parser::parse_statement() {
     }
 }
 
-std::vector<std::shared_ptr<StmtAST>> Parser::parse() {
-    std::vector<std::shared_ptr<StmtAST>> statements;
+std::vector<std::unique_ptr<StmtAST>> Parser::parse() {
+    std::vector<std::unique_ptr<StmtAST>> statements;
 
     while (current_token().type != TokenType::EOF) {
-        std::shared_ptr<StmtAST> statement = parse_statement();
+        std::unique_ptr<StmtAST> statement = parse_statement();
         if (statement) {
-            statements.push_back(statement);
+            statements.push_back(std::move(statement));
         }
     }
 

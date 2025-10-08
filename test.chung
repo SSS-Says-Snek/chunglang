@@ -1,9 +1,8 @@
-def goon() {
-    print(32);
+def stuff(param: int64) {
+    print(param);
 }
 
 def main() {
-    print(41 + 32);
-    print(68);
-    goon();
+    stuff(4);
+    print(3);
 }

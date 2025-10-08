@@ -41,7 +41,7 @@ llvm::Value* FunctionAST::codegen(Context& ctx) {
 }
 
 llvm::Value* OmgAST::codegen(Context& ctx) {
-    std::cerr << "NOT IMPLEMENTED yet\n";
+    std::cerr << "NOT IMPLEMENTED yet (OmgAST)\n";
     return nullptr;
 }
 
@@ -67,9 +67,9 @@ llvm::Value* BinaryExprAST::codegen(Context& ctx) {
         case TokenType::MUL:
             lhs_code->getType()->print(llvm::outs());
             return ctx.builder.CreateMul(lhs_code, rhs_code);
+        default:
+            std::cerr << "NOT IMPLEMENTED YET (BinaryExprAST)\n";
     }
-
-    std::cerr << "NOT IMPLEMENTED yet\n";
     return nullptr;
 }
 
@@ -117,6 +117,6 @@ llvm::Value* PrimitiveAST::codegen(Context& ctx) {
 }
 
 llvm::Value* VariableAST::codegen(Context& ctx) {
-    std::cerr << "NOT IMPLEMENTED yet\n";
+    std::cerr << "NOT IMPLEMENTED yet (VariableAST)\n";
     return nullptr;
 }

@@ -1,1 +1,0 @@
-clang++ test.cpp src/lexer.cpp src/parser.cpp src/stringify.cpp src/utf.cpp src/codegen.cpp src/file.cpp src/token.cpp -Iinclude `llvm-config --cxxflags --ldflags --system-libs --libs core` -std=c++17 -o test.o -fexceptions -Wall

@@ -76,26 +76,26 @@ public:
 
     void synchronize();
 
-    std::shared_ptr<ExprAST> parse_call();
-    std::shared_ptr<ExprAST> parse_identifier();
-    std::shared_ptr<ExprAST> parse_parentheses();
-    std::shared_ptr<ExprAST> parse_bin_op(int min_op_precedence, std::shared_ptr<ExprAST> lhs);
-    std::shared_ptr<ExprAST> parse_primitive();
-    std::shared_ptr<ExprAST> parse_primary();
+    std::unique_ptr<ExprAST> parse_call();
+    std::unique_ptr<ExprAST> parse_identifier();
+    std::unique_ptr<ExprAST> parse_parentheses();
+    std::unique_ptr<ExprAST> parse_bin_op(int min_op_precedence, std::unique_ptr<ExprAST> lhs);
+    std::unique_ptr<ExprAST> parse_primitive();
+    std::unique_ptr<ExprAST> parse_primary();
     
     // Statements
-    std::vector<std::shared_ptr<StmtAST>> parse_block();
-    std::shared_ptr<StmtAST> parse_var_declaration();
-    std::shared_ptr<StmtAST> parse_function();
-    std::shared_ptr<StmtAST> parse_omg();
-    std::shared_ptr<StmtAST> parse_expression_statement();
+    std::vector<std::unique_ptr<StmtAST>> parse_block();
+    std::unique_ptr<StmtAST> parse_var_declaration();
+    std::unique_ptr<StmtAST> parse_function();
+    std::unique_ptr<StmtAST> parse_omg();
+    std::unique_ptr<StmtAST> parse_expression_statement();
     
     // Heheheha
-    std::shared_ptr<ExprAST> parse_expression();
-    std::shared_ptr<StmtAST> parse_statement();
+    std::unique_ptr<ExprAST> parse_expression();
+    std::unique_ptr<StmtAST> parse_statement();
 
     // For now
-    std::vector<std::shared_ptr<StmtAST>> parse();
+    std::vector<std::unique_ptr<StmtAST>> parse();
 
 private:
     std::vector<Token> tokens;

@@ -32,9 +32,9 @@ class VarDeclareAST: public StmtAST {
 public:
     std::string name;
     Type& type;
-    std::shared_ptr<ExprAST> expr;
+    std::unique_ptr<ExprAST> expr;
 
-    VarDeclareAST(const std::string& name, Type& type, std::shared_ptr<ExprAST> expr):
+    VarDeclareAST(const std::string& name, Type& type, std::unique_ptr<ExprAST> expr):
         name{name}, type{type}, expr{std::move(expr)} {}
 
     std::string stringify(size_t indent_level = 0);
@@ -45,12 +45,12 @@ class FunctionAST: public StmtAST {
 public:
     std::string name;
     std::vector<VarDeclareAST> parameters;
-    std::vector<std::shared_ptr<StmtAST>> body;
+    std::vector<std::unique_ptr<StmtAST>> body;
 
     // FOR NOW; I just want things to work
-    std::shared_ptr<ExprAST> return_type;
+    std::unique_ptr<ExprAST> return_type;
 
-    FunctionAST(const std::string& name, std::vector<VarDeclareAST> parameters, std::vector<std::shared_ptr<StmtAST>> body):
+    FunctionAST(const std::string& name, std::vector<VarDeclareAST> parameters, std::vector<std::unique_ptr<StmtAST>> body):
         name{name}, parameters{std::move(parameters)}, body{std::move(body)} {}
 
 
@@ -60,9 +60,9 @@ public:
 
 class OmgAST: public StmtAST {
 public:
-    std::shared_ptr<ExprAST> expr;
+    std::unique_ptr<ExprAST> expr;
 
-    OmgAST(std::shared_ptr<ExprAST> expr): expr{std::move(expr)} {}
+    OmgAST(std::unique_ptr<ExprAST> expr): expr{std::move(expr)} {}
 
     std::string stringify(size_t indent_level = 0);
     virtual llvm::Value* codegen(Context& ctx);
@@ -70,9 +70,9 @@ public:
 
 class ExprStmtAST: public StmtAST {
 public:
-    std::shared_ptr<ExprAST> expr;
+    std::unique_ptr<ExprAST> expr;
 
-    ExprStmtAST(std::shared_ptr<ExprAST> expr): expr{std::move(expr)} {}
+    ExprStmtAST(std::unique_ptr<ExprAST> expr): expr{std::move(expr)} {}
 
     std::string stringify(size_t indent_level = 0);
     virtual llvm::Value* codegen(Context& ctx);
@@ -81,10 +81,10 @@ public:
 class BinaryExprAST: public ExprAST {
 public:
     TokenType op;
-    std::shared_ptr<ExprAST> lhs;
-    std::shared_ptr<ExprAST> rhs;
+    std::unique_ptr<ExprAST> lhs;
+    std::unique_ptr<ExprAST> rhs;
 
-    BinaryExprAST(TokenType op, std::shared_ptr<ExprAST> lhs, std::shared_ptr<ExprAST> rhs):
+    BinaryExprAST(TokenType op, std::unique_ptr<ExprAST> lhs, std::unique_ptr<ExprAST> rhs):
         op{op}, lhs{std::move(lhs)}, rhs{std::move(rhs)} {}
     
     std::string stringify(size_t indent_level);
@@ -94,9 +94,9 @@ public:
 class CallAST: public ExprAST {
 public:
     std::string callee;
-    std::vector<std::shared_ptr<ExprAST>> arguments;
+    std::vector<std::unique_ptr<ExprAST>> arguments;
 
-    CallAST(const std::string& callee, std::vector<std::shared_ptr<ExprAST>> arguments):
+    CallAST(const std::string& callee, std::vector<std::unique_ptr<ExprAST>> arguments):
         callee{callee}, arguments{std::move(arguments)} {}
     
     std::string stringify(size_t indent_level);
