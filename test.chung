@@ -1,3 +1,9 @@
+def goon() {
+    print(32);
+}
+
 def main() {
     print(41 + 32);
+    print(68);
+    goon();
 }

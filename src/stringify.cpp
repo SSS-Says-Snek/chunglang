@@ -114,6 +114,7 @@ std::string FunctionAST::stringify(size_t indent_level) {
     std::string indentation = indent(indent_level);
     std::string string{indentation + "Function Declaration:"};
 
+    // string += "\n\t" + indentation + "Indentation level: " + std::to_string(indent_level);
     string += "\n\t" + indentation + "Name: " + name;
     string += "\n\t" + indentation + "Parameters:";
 
@@ -121,7 +122,12 @@ std::string FunctionAST::stringify(size_t indent_level) {
         string += "\n\t\t" + indentation + "Parameter " + std::to_string(i) + ": " + parameters[i].name;
     }
     if (parameters.size() == 0) {
-        string += "\n\t\tNo Parameters";
+        string += "\n\t\t" + indentation + "No Parameters";
+    }
+
+    string += "\n\t" + indentation + "Body:";
+    for (auto& statement : body) {
+        string += "\n" + statement->stringify(indent_level + 2);
     }
 
     return string;
@@ -150,7 +156,8 @@ std::string ExprStmtAST::stringify(size_t indent_level) {
     std::string indentation = indent(indent_level);
     std::string string{indentation + "Expression Statement:"};
     
-    string += '\n' + indentation + expr->stringify(indent_level + 1);
+    // string += "\n\t" + indentation + "Indentation level: " + std::to_string(indent_level);
+    string += "\n" + expr->stringify(indent_level + 1);
     return string;
 }
 
@@ -158,7 +165,8 @@ std::string BinaryExprAST::stringify(size_t indent_level) {
     std::string indentation = indent(indent_level);
     std::string string{indentation + "Binary Operation:"};
 
-    string += "\n\t" + indentation + "Operator: " + stringify_type(op);
+    // string += "\n\t" + indentation + "Indentation level: " + std::to_string(indent_level);
+    string += "\n\t" + indentation + "Operator: " + stringify_op(op, false);
 
     // 2 new indentation level: 1 for "Binary Operation" and another for the side
     string += "\n\t" + indentation + "Left Hand:\n" + lhs->stringify(indent_level + 2);
@@ -169,21 +177,28 @@ std::string BinaryExprAST::stringify(size_t indent_level) {
 
 std::string CallAST::stringify(size_t indent_level) {
     std::string indentation = indent(indent_level);
-    std::string string{indentation + "Call:"};
+    std::string string{indentation + "Function Call:"};
 
+    // string += "\n\t" + indentation + "Indentation level: " + std::to_string(indent_level);
     string += "\n\t" + indentation + "Name: " + callee;
     string += "\n\t" + indentation + "Arguments:\n";
     
     for (size_t i = 0; i < arguments.size(); i++) {
         /*
-        Call:
+        Function Call:
+            Name: sigma
             Arguments:
                 Argument 1:
                     sdgasg
+                Argument 2:
+                    skibidi
         */
         string += indentation + "\t\tArgument " + std::to_string(i + 1) + ":\n" + arguments[i]->stringify(indent_level + 3);
     }
 
+    if (arguments.size() == 0) {
+        string += indentation + "\t\tNo Arguments";
+    }
     return string;
 }
 

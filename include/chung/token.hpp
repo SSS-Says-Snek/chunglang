@@ -22,7 +22,7 @@ enum class TokenType {
     ARROW,
     DOT, COMMA, COLON, SEMICOLON,
 
-    DEF, LET, __OMG,
+    DEF, LET, RETURN, __OMG,
 
     // Primitives
     UINT64,

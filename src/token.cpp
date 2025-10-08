@@ -4,7 +4,7 @@
 
 bool is_keyword(const std::string& identifier) {
     static const std::vector<std::string> keyword_identifiers{
-        "def", "let", "__omg"
+        "def", "let", "__omg", "return"
     };
 
     if (std::find(std::begin(keyword_identifiers), std::end(keyword_identifiers), identifier) != std::end(keyword_identifiers)) {
@@ -15,7 +15,7 @@ bool is_keyword(const std::string& identifier) {
 
 bool is_keyword(TokenType keyword) {
     static const std::vector<TokenType> keywords{
-        TokenType::DEF, TokenType::LET, TokenType::__OMG
+        TokenType::DEF, TokenType::LET, TokenType::__OMG, TokenType::RETURN
     };
 
     if (std::find(std::begin(keywords), std::end(keywords), keyword) != std::end(keywords)) {

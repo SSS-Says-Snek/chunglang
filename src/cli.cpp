@@ -95,6 +95,7 @@ void run_parse(std::vector<std::string>& args) {
         std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET;
         std::cout << ANSI_BOLD << "                 Program AST                  \n" << ANSI_RESET;
         std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET << '\n';
+        std::cout << ANSI_CYAN << "Number of statements: " << statements.size() << ANSI_RESET << '\n';
 
         for (auto& statement: statements) {
             std::cout << statement->stringify() << '\n';

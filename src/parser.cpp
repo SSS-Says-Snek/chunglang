@@ -83,10 +83,9 @@ std::shared_ptr<ExprAST> Parser::parse_call() {
 
     bool running = true;
     while (running) {
+        // Is there an arg? If so, parse and append. Otherwise just skip ts and go to the switch
         if (auto argument = parse_expression()) {
             arguments.push_back(argument);
-        } else {
-            return nullptr;
         }
 
         switch (current_token().type) {

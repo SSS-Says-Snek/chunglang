@@ -50,7 +50,6 @@ llvm::Value* ExprStmtAST::codegen(Context& ctx) {
 }
 
 llvm::Value* BinaryExprAST::codegen(Context& ctx) {
-    std::cout << "E";
     llvm::Value* lhs_code = lhs->codegen(ctx);
     llvm::Value* rhs_code = rhs->codegen(ctx);
     if (!lhs_code || !rhs_code) {
