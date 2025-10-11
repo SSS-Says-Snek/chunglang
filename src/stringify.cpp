@@ -119,7 +119,7 @@ std::string FunctionAST::stringify(size_t indent_level) {
     string += "\n\t" + indentation + "Parameters:";
 
     for (size_t i = 0; i < parameters.size(); i++) {
-        string += "\n\t\t" + indentation + "Parameter " + std::to_string(i) + ": " + parameters[i].name;
+        string += "\n\t\t" + indentation + "Parameter " + std::to_string(i + 1) + ": " + parameters[i].name;
     }
     if (parameters.size() == 0) {
         string += "\n\t\t" + indentation + "No Parameters";
@@ -220,5 +220,7 @@ std::string PrimitiveAST::stringify(size_t indent_level) {
 }
 
 std::string VariableAST::stringify(size_t indent_level) {
-    return "Amogus";
+    std::string indentation = indent(indent_level);
+
+    return indentation + "Variable Name: " + name + '\n';
 }

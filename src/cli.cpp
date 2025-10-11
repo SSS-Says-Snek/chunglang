@@ -85,7 +85,6 @@ void run_parse(std::vector<std::string>& args) {
             std::cout << parse_exception.write() << '\n';
         }
         std::cout << ANSI_RESET;
-        return;
     } else {
         std::cout << ANSI_GREEN << "Successfully parsed with no exceptions!\n\n" << ANSI_RESET;
     }
@@ -105,6 +104,10 @@ void run_parse(std::vector<std::string>& args) {
             if (statement_value) {
                 statement_value->print(llvm::outs());
             }
+        }
+
+        if (!parse_exceptions.empty()) {
+            return;
         }
 
         std::cout << "\n\n";
