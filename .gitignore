@@ -1,11 +1,7 @@
-.vscode
 *.exe
 *.o
 
 compile_commands.json
-
-# Chung CLI
-chung
 
 # Various building things
 chungbuild/

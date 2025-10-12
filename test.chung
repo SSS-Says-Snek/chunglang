@@ -9,4 +9,5 @@ def aa(param: int64) {
 def main() {
     stuff(4);
     print(3);
+    print(4);
 }

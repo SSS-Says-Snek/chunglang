@@ -1,0 +1,57 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build",
+            "type": "shell",
+            "command": "cmake -S . -B build"
+        },
+
+        {
+            "label": "Build (Debug)",
+            "type": "shell",
+            "command": "cmake -DCMAKE_BUILD_TYPE=Debug -S . -B build"
+        },
+
+        {
+            "label": "Compile Project",
+            "type": "shell",
+            "command": "cmake --build build"
+        },
+
+        {
+            "label": "Build and Compile Project",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Build",
+                "Compile Project"
+            ]
+        },
+
+        {
+            "label": "Build (Debug) and Compile Project",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Build (Debug)",
+                "Compile Project"
+            ]
+        },
+
+        {
+            "label": "Run and Compile `test.chung`",
+            "type": "shell",
+            "command": "./build/chung parse test.chung"
+        },
+
+        {
+            "label": "Run Output File",
+            "type": "shell",
+            "command": "./chungbuild/output.out",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        }
+    ]
+}
