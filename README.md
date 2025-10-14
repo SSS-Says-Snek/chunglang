@@ -46,7 +46,7 @@ git clone https://github.com/SSS-Says-Snek/chunglang
 cmake -S . -B build
 cmake --build build
 ```
-4. The CLI is now available at `./chung`
+4. The CLI is now available at `./build/chung`
 
 ## Use
 
@@ -56,3 +56,4 @@ Compile the test program
 ```
 
 The resulting binary should be located in `./chungbuild/` and should be named `output.out`.
+
