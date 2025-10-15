@@ -24,7 +24,8 @@
 #define CHUNG_VER_PATCH 1
 
 inline std::string chung_ver_string() {
-    return std::to_string(CHUNG_VER_MAJOR) + '.' + std::to_string(CHUNG_VER_MINOR) + '.' + std::to_string(CHUNG_VER_PATCH);
+    return std::to_string(CHUNG_VER_MAJOR) + '.' + std::to_string(CHUNG_VER_MINOR) + '.' +
+           std::to_string(CHUNG_VER_PATCH);
 }
 
 void run_help() {
@@ -41,7 +42,7 @@ void run_parse(std::vector<std::string>& args) {
         std::cerr << ANSI_RED << "Expected 1 argument, received " << args.size() - 1 << '\n' << ANSI_RESET;
         std::exit(1);
     }
-    
+
     std::string file_path = args[1];
     if (!file_exists(file_path)) {
         std::cerr << ANSI_RED << "File not found: \"" << file_path << "\" cannot be located" << '\n' << ANSI_RESET;
@@ -59,7 +60,7 @@ void run_parse(std::vector<std::string>& args) {
 
     if (!lex_exceptions.empty()) {
         std::cout << ANSI_RED;
-        for (auto& lex_exception: lex_exceptions) {
+        for (auto& lex_exception : lex_exceptions) {
             std::cout << lex_exception.write() << '\n';
         }
         std::cout << ANSI_RESET;
@@ -68,11 +69,11 @@ void run_parse(std::vector<std::string>& args) {
         std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET;
         std::cout << ANSI_BOLD << "                Program Tokens                \n" << ANSI_RESET;
         std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET;
-        for (auto& token: tokens) {
+        for (auto& token : tokens) {
             std::cout << '|' << ANSI_BOLD << stringify(token) << ANSI_RESET << "| ";
         }
         std::cout << "\n\n";
-     }
+    }
 
     std::cout << "Parsing " << file_path << '\n';
     Parser parser{tokens, lexer.get_source_lines(), ctx};
@@ -81,7 +82,7 @@ void run_parse(std::vector<std::string>& args) {
 
     if (!parse_exceptions.empty()) {
         std::cout << ANSI_RED;
-        for (auto& parse_exception: parse_exceptions) {
+        for (auto& parse_exception : parse_exceptions) {
             std::cout << parse_exception.write() << '\n';
         }
         std::cout << ANSI_RESET;
@@ -97,7 +98,7 @@ void run_parse(std::vector<std::string>& args) {
         std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET << '\n';
         std::cout << ANSI_CYAN << "Number of statements: " << statements.size() << ANSI_RESET << '\n';
 
-        for (auto& statement: statements) {
+        for (auto& statement : statements) {
             std::cout << statement->stringify() << '\n';
 
             llvm::Value* statement_value = statement->codegen(ctx);
@@ -141,7 +142,7 @@ void run_parse(std::vector<std::string>& args) {
 
         auto rm = std::optional<llvm::Reloc::Model>();
         auto target_machine = target->createTargetMachine(target_triple, cpu, features, options, rm);
-        
+
         ctx.module->setDataLayout(target_machine->createDataLayout());
         ctx.module->setTargetTriple(target_triple);
 
@@ -169,10 +170,12 @@ void run_parse(std::vector<std::string>& args) {
 
         pass.run(*ctx.module);
         dest.flush();
-        
+
         // IDK /shrug
         system("clang++ $(llvm-config --cxxflags) src/library/prelude.cpp -Iinclude -c -o chungbuild/prelude.o");
-        system((std::string{"clang++ $(llvm-config --ldflags --libs) "} + output_filepath + " chungbuild/prelude.o -o chungbuild/output.out").c_str());
+        system((std::string{"clang++ $(llvm-config --ldflags --libs) "} + output_filepath +
+                " chungbuild/prelude.o -o chungbuild/output.out")
+                   .c_str());
     }
 }
 

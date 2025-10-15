@@ -8,21 +8,38 @@
 #undef EOF
 
 enum class TokenType {
-    EOF, INVALID,
+    EOF,
+    INVALID,
 
     IDENTIFIER,
 
-    ADD, SUB, MUL, DIV, MOD, POW,
-    BITWISE_AND, BITWISE_OR, BITWISE_NOT,
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+    MOD,
+    POW,
+    BITWISE_AND,
+    BITWISE_OR,
+    BITWISE_NOT,
     ASSIGN,
 
-    OPEN_PARENTHESES, CLOSE_PARENTHESES,
-    OPEN_BRACKETS, CLOSE_BRACKETS,
-    OPEN_BRACES, CLOSE_BRACES,
+    OPEN_PARENTHESES,
+    CLOSE_PARENTHESES,
+    OPEN_BRACKETS,
+    CLOSE_BRACKETS,
+    OPEN_BRACES,
+    CLOSE_BRACES,
     ARROW,
-    DOT, COMMA, COLON, SEMICOLON,
+    DOT,
+    COMMA,
+    COLON,
+    SEMICOLON,
 
-    DEF, LET, RETURN, __OMG,
+    DEF,
+    LET,
+    RETURN,
+    __OMG,
 
     // Primitives
     UINT64,
@@ -56,8 +73,8 @@ struct Token {
 
     std::string text;
 
-    Token(TokenType type, size_t beg, size_t end):
-        type{type}, beg{beg}, end{end}, line{0}, column{0} {}
+    Token(TokenType type, size_t beg, size_t end) : type{type}, beg{beg}, end{end}, line{0}, column{0} {
+    }
 };
 
 bool is_keyword(const std::string& identifier);

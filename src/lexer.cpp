@@ -5,17 +5,17 @@
 #include "chung/lexer.hpp"
 // #include "chung/utf.hpp"
 
-#define HANDLE_SIMPLE(op_, op_name)                                                   \
-    case op_name:                                                                 \
-        tokens.push_back(make_token(op_, cursor, cursor + 1));                    \
-        advance();                                                                \
-        break;                                                                    \
+#define HANDLE_SIMPLE(op_, op_name)                                                                                    \
+    case op_name:                                                                                                      \
+        tokens.push_back(make_token(op_, cursor, cursor + 1));                                                         \
+        advance();                                                                                                     \
+        break;
 
-#define HANDLE_ESCAPE_SEQUENCE(char_, actual_char) \
-    case char_:                                    \
-        string += actual_char;                     \
-        advance();                                 \
-        break;                                     \
+#define HANDLE_ESCAPE_SEQUENCE(char_, actual_char)                                                                     \
+    case char_:                                                                                                        \
+        string += actual_char;                                                                                         \
+        advance();                                                                                                     \
+        break;
 
 inline bool is_identifier_char(char c) {
     if (std::isalpha(c) || c == '_') {
@@ -24,18 +24,19 @@ inline bool is_identifier_char(char c) {
     return false;
 }
 
-LexException::LexException(const std::string& exception_message, size_t start, size_t end):
-    exception_message{exception_message}, start{start}, end{end} {}
+LexException::LexException(const std::string& exception_message, size_t start, size_t end)
+    : exception_message{exception_message}, start{start}, end{end} {
+}
 
 std::string LexException::write() {
     std::string string{"LexException at line " + std::to_string(line) + " column " + std::to_string(column) + ":\n"};
     string += '\t' + source_line + '\n';
     string += exception_message + '\n';
-    
+
     return string;
 }
 
-Lexer::Lexer(const std::string& source): source{source}, source_lines{}, cursor{0} {
+Lexer::Lexer(const std::string& source) : source{source}, source_lines{}, cursor{0} {
     size_t start = 0;
     size_t end = 0;
 
@@ -49,9 +50,9 @@ Lexer::Lexer(const std::string& source): source{source}, source_lines{}, cursor{
 std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
     std::vector<Token> tokens;
     std::vector<LexException> exceptions;
-    
+
     while (true) {
-        try { 
+        try {
             // Skips whitespace
             while (std::iswspace(peek()) || peek() == '\n') {
                 advance();
@@ -79,6 +80,10 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                         type = TokenType::LET;
                     } else if (identifier == "__omg") {
                         type = TokenType::__OMG;
+                    } else {
+                        // Uh oh we haven't implemented it yet
+                        std::cout << "Keyword NOT implemented yet";
+                        type = TokenType::INVALID;
                     }
                 } else {
                     type = TokenType::IDENTIFIER;
@@ -97,43 +102,44 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                 TokenType type;
 
                 switch (suffix) {
-                    case 'U' | 'u': // Unsigned
-                        try {
-                            type = TokenType::UINT64;
-                            advance();
-                        } catch (...) {
-                            // L
-                            tokens.push_back(make_token(TokenType::INVALID, start, cursor));
-                            throw LexException{"Value " + token_string + " too large to store in an uint64", start, cursor};
-                        }
-                        break;
-
-                    case '.': { // Floating point
-                        size_t decimal_start = cursor;
+                case 'U' | 'u': // Unsigned
+                    try {
+                        type = TokenType::UINT64;
                         advance();
-                        while (std::iswdigit(peek())) {
-                            advance();
-                        }
-                        std::string float_string = token_string + source.substr(decimal_start, cursor - decimal_start);
-
-                        try {
-                            type = TokenType::FLOAT64;
-                        } catch (...) {
-                            tokens.push_back(make_token(TokenType::INVALID, start, cursor));
-                            throw LexException{"Value " + float_string + " too large to store in an float64", start, cursor};
-                        }
-                        break;
+                    } catch (...) {
+                        // L
+                        tokens.push_back(make_token(TokenType::INVALID, start, cursor));
+                        throw LexException{"Value " + token_string + " too large to store in an uint64", start, cursor};
                     }
+                    break;
 
-                    default:
-                        try {
-                            type = TokenType::INT64;
-                        } catch (...) {
-                            // L
-                            tokens.push_back(make_token(TokenType::INVALID, start, cursor));
-                            throw LexException{"Value " + token_string + " too large to store in an int64", start, cursor};
-                        }
-                        break;
+                case '.': { // Floating point
+                    size_t decimal_start = cursor;
+                    advance();
+                    while (std::iswdigit(peek())) {
+                        advance();
+                    }
+                    std::string float_string = token_string + source.substr(decimal_start, cursor - decimal_start);
+
+                    try {
+                        type = TokenType::FLOAT64;
+                    } catch (...) {
+                        tokens.push_back(make_token(TokenType::INVALID, start, cursor));
+                        throw LexException{"Value " + float_string + " too large to store in an float64", start,
+                                           cursor};
+                    }
+                    break;
+                }
+
+                default:
+                    try {
+                        type = TokenType::INT64;
+                    } catch (...) {
+                        // L
+                        tokens.push_back(make_token(TokenType::INVALID, start, cursor));
+                        throw LexException{"Value " + token_string + " too large to store in an int64", start, cursor};
+                    }
+                    break;
                 }
 
                 tokens.push_back(make_token(type, start, cursor));
@@ -174,29 +180,29 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                 tokens.push_back(token);
             } else {
                 switch (peek()) {
-                    case '-':
+                case '-':
+                    advance();
+                    if (peek() == '>') { // Arrow (->)
                         advance();
-                        if (peek() == '>') { // Arrow (->)
-                            advance();
-                            tokens.push_back(make_token(TokenType::ARROW, cursor - 2, cursor));
-                        } else { // Subtraction
-                            tokens.push_back(make_token(TokenType::SUB, cursor - 1, cursor));
-                        }
-                        break;
+                        tokens.push_back(make_token(TokenType::ARROW, cursor - 2, cursor));
+                    } else { // Subtraction
+                        tokens.push_back(make_token(TokenType::SUB, cursor - 1, cursor));
+                    }
+                    break;
 
-                    case '/':
+                case '/':
+                    advance();
+                    if (peek() == '/') { // Comment
                         advance();
-                        if (peek() == '/') { // Comment
-                            advance();
-                            while (peek() != '\0') {
-                                if (advance() == '\n') {
-                                    break;
-                                }
+                        while (peek() != '\0') {
+                            if (advance() == '\n') {
+                                break;
                             }
-                        } else { // Division
-                            tokens.push_back(make_token(TokenType::DIV, cursor - 1, cursor));
                         }
-                        break;
+                    } else { // Division
+                        tokens.push_back(make_token(TokenType::DIV, cursor - 1, cursor));
+                    }
+                    break;
 
                     HANDLE_SIMPLE(TokenType::ADD, '+')
                     HANDLE_SIMPLE(TokenType::MUL, '*')
@@ -214,9 +220,9 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                     HANDLE_SIMPLE(TokenType::COLON, ':')
                     HANDLE_SIMPLE(TokenType::SEMICOLON, ';')
 
-                    default:
-                        tokens.push_back(make_token(TokenType::INVALID, cursor, cursor + 1));
-                        advance();
+                default:
+                    tokens.push_back(make_token(TokenType::INVALID, cursor, cursor + 1));
+                    advance();
                 }
             }
         } catch (LexException& exception) {
@@ -248,7 +254,7 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
             line++;
             line_idx = i + 1;
         }
-        
+
         if (tokens[token_idx].beg == i) {
             tokens[token_idx].line = line;
             tokens[token_idx].column = column - 1;
