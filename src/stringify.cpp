@@ -194,16 +194,16 @@ std::string PrimitiveAST::stringify(size_t indent_level) {
     std::string indentation = indent(indent_level);
 
     switch (value_type) {
-    case ValueType::INT64:
-        return indentation + "Int64: " + std::to_string(int64) + '\n';
-    case ValueType::UINT64:
-        return indentation + "UInt64: " + std::to_string(uint64) + '\n';
-    case ValueType::FLOAT64:
-        return indentation + "Float64: " + std::to_string(float64) + '\n';
-    case ValueType::STRING:
-        return indentation + "String: \"" + string + "\"\n";
-    default:
-        return indentation + "Invalid\n";
+        case ValueType::INT64:
+            return indentation + "Int64: " + std::to_string(int64) + '\n';
+        case ValueType::UINT64:
+            return indentation + "UInt64: " + std::to_string(uint64) + '\n';
+        case ValueType::FLOAT64:
+            return indentation + "Float64: " + std::to_string(float64) + '\n';
+        case ValueType::STRING:
+            return indentation + "String: \"" + string + "\"\n";
+        default:
+            return indentation + "Invalid\n";
     }
 }
 

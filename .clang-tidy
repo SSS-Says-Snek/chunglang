@@ -1,5 +1,24 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*'
+Checks: "*,
+        -abseil-*,
+        -altera-*,
+        -android-*,
+        -fuchsia-*,
+        -google-*,
+        -llvm*,
+        -modernize-use-trailing-return-type,
+        -zircon-*,
+        -readability-else-after-return,
+        -readability-static-accessed-through-instance,
+        -readability-avoid-const-params-in-decls,
+        -cppcoreguidelines-non-private-member-variables-in-classes,
+        -misc-non-private-member-variables-in-classes,
+        -misc-no-recursion,
+        -readability-identifier-length,
+        -readability-implicit-bool-conversion,
+        -cppcoreguidelines-avoid-const-or-ref-data-members
+"
+# Checks:          'clang-diagnostic-*,clang-analyzer-*'
 WarningsAsErrors: ''
 HeaderFileExtensions:
   - ''

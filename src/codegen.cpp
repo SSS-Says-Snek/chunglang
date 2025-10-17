@@ -59,18 +59,18 @@ llvm::Value* BinaryExprAST::codegen(Context& ctx) {
     }
 
     switch (op) {
-    // TODO: Add type system (wow)
-    case TokenType::ADD:
-        lhs_code->getType()->print(llvm::outs());
-        return ctx.builder.CreateAdd(lhs_code, rhs_code);
-    case TokenType::SUB:
-        lhs_code->getType()->print(llvm::outs());
-        return ctx.builder.CreateSub(lhs_code, rhs_code);
-    case TokenType::MUL:
-        lhs_code->getType()->print(llvm::outs());
-        return ctx.builder.CreateMul(lhs_code, rhs_code);
-    default:
-        std::cerr << "NOT IMPLEMENTED YET (BinaryExprAST)\n";
+        // TODO: Add type system (wow)
+        case TokenType::ADD:
+            lhs_code->getType()->print(llvm::outs());
+            return ctx.builder.CreateAdd(lhs_code, rhs_code);
+        case TokenType::SUB:
+            lhs_code->getType()->print(llvm::outs());
+            return ctx.builder.CreateSub(lhs_code, rhs_code);
+        case TokenType::MUL:
+            lhs_code->getType()->print(llvm::outs());
+            return ctx.builder.CreateMul(lhs_code, rhs_code);
+        default:
+            std::cerr << "NOT IMPLEMENTED YET (BinaryExprAST)\n";
     }
     return nullptr;
 }
@@ -105,18 +105,18 @@ llvm::Value* CallAST::codegen(Context& ctx) {
 
 llvm::Value* PrimitiveAST::codegen(Context& ctx) {
     switch (value_type) {
-    case ValueType::INT64:
-        // std::cout << "Int\n";
-        return llvm::ConstantInt::get(ctx.context, llvm::APInt{64, static_cast<uint64_t>(int64), true});
-    case ValueType::UINT64:
-        // std::cout << "Uint\n";
-        return llvm::ConstantInt::get(ctx.context, llvm::APInt{64, uint64, false});
-    case ValueType::FLOAT64:
-        // std::cout << "Float\n";
-        return llvm::ConstantFP::get(ctx.context, llvm::APFloat{float64});
-    default:
-        // std::cout << "L\n";
-        return nullptr;
+        case ValueType::INT64:
+            // std::cout << "Int\n";
+            return llvm::ConstantInt::get(ctx.context, llvm::APInt{64, static_cast<uint64_t>(int64), true});
+        case ValueType::UINT64:
+            // std::cout << "Uint\n";
+            return llvm::ConstantInt::get(ctx.context, llvm::APInt{64, uint64, false});
+        case ValueType::FLOAT64:
+            // std::cout << "Float\n";
+            return llvm::ConstantFP::get(ctx.context, llvm::APFloat{float64});
+        default:
+            // std::cout << "L\n";
+            return nullptr;
     }
 }
 

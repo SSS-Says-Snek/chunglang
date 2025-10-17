@@ -87,14 +87,14 @@ std::unique_ptr<ExprAST> Parser::parse_call() {
         }
 
         switch (current_token().type) {
-        case TokenType::CLOSE_PARENTHESES:
-            running = false;
-            break;
-        case TokenType::COMMA:
-            eat_token();
-            break;
-        default:
-            throw push_exception("Expected ',' or ')' within function call", current_token());
+            case TokenType::CLOSE_PARENTHESES:
+                running = false;
+                break;
+            case TokenType::COMMA:
+                eat_token();
+                break;
+            default:
+                throw push_exception("Expected ',' or ')' within function call", current_token());
         }
     }
 
@@ -157,24 +157,24 @@ std::unique_ptr<ExprAST> Parser::parse_primitive() {
     Token token = eat_token();
 
     switch (token.type) {
-    case TokenType::INT64: {
-        int64_t int64 = std::stoll(token.text);
-        return std::make_unique<PrimitiveAST>(int64);
-    }
-    case TokenType::UINT64: {
-        uint64_t uint64 = std::stoull(token.text);
-        return std::make_unique<PrimitiveAST>(uint64);
-    }
-    case TokenType::FLOAT64: {
-        double float64 = std::stod(token.text);
-        return std::make_unique<PrimitiveAST>(float64);
-    }
-    case TokenType::STRING: {
-        return std::make_unique<PrimitiveAST>(token.text);
-    }
-    default:
-        // Invalid token
-        throw push_exception("Invalid token in expression", token);
+        case TokenType::INT64: {
+            int64_t int64 = std::stoll(token.text);
+            return std::make_unique<PrimitiveAST>(int64);
+        }
+        case TokenType::UINT64: {
+            uint64_t uint64 = std::stoull(token.text);
+            return std::make_unique<PrimitiveAST>(uint64);
+        }
+        case TokenType::FLOAT64: {
+            double float64 = std::stod(token.text);
+            return std::make_unique<PrimitiveAST>(float64);
+        }
+        case TokenType::STRING: {
+            return std::make_unique<PrimitiveAST>(token.text);
+        }
+        default:
+            // Invalid token
+            throw push_exception("Invalid token in expression", token);
     }
 }
 
@@ -275,12 +275,12 @@ std::unique_ptr<StmtAST> Parser::parse_function() {
         parameters.push_back(VarDeclareAST{parameter.text, type, nullptr});
 
         switch (current_token().type) {
-        case TokenType::COMMA:
-            eat_token();
-        case TokenType::CLOSE_PARENTHESES:
-            break;
-        default:
-            throw push_exception("Expected either '(' or ',' in function parameter list", current_token());
+            case TokenType::COMMA:
+                eat_token();
+            case TokenType::CLOSE_PARENTHESES:
+                break;
+            default:
+                throw push_exception("Expected either '(' or ',' in function parameter list", current_token());
         }
     }
 
@@ -332,16 +332,16 @@ std::unique_ptr<StmtAST> Parser::parse_statement() {
         Token token = current_token();
         if (is_keyword(token.type)) {
             switch (token.type) {
-            case TokenType::LET:
-                return parse_var_declaration();
-            case TokenType::DEF:
-                return parse_function();
-            case TokenType::__OMG:
-                return parse_omg();
-            default: {
-                std::cout << "You failed me.\n";
-                return nullptr;
-            }
+                case TokenType::LET:
+                    return parse_var_declaration();
+                case TokenType::DEF:
+                    return parse_function();
+                case TokenType::__OMG:
+                    return parse_omg();
+                default: {
+                    std::cout << "You failed me.\n";
+                    return nullptr;
+                }
             }
         } else {
             return parse_expression_statement();

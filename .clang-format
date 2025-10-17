@@ -1,6 +1,7 @@
 ---
 BasedOnStyle: LLVM
 IndentWidth: 4
+IndentCaseLabels: true
 AlignTrailingComments: true
 AllowShortFunctionsOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: true

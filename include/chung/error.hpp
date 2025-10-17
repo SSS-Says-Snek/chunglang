@@ -1,8 +1,9 @@
 #pragma once
 
+#include <exception>
 #include <string>
 
-class Exception {
+class Exception : std::exception {
 public:
     virtual ~Exception() = default;
     virtual std::string write() = 0;

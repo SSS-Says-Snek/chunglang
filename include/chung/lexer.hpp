@@ -17,26 +17,26 @@ public:
     std::string source_line;
 
     LexException(const std::string& exception_message, size_t start, size_t end);
-    std::string write();
+    std::string write() override;
 };
 
 class Lexer {
 public:
-    Lexer(const std::string& source);
+    explicit Lexer(const std::string& source);
 
-    inline char advance() {
+    char advance() {
         return source[cursor++];
     }
 
-    inline char peek() {
+    char peek() {
         return source[cursor];
     }
 
-    inline std::vector<std::string> get_source_lines() {
+    std::vector<std::string> get_source_lines() {
         return source_lines;
     }
 
-    inline Token make_token(TokenType type, size_t beg, size_t end) {
+    Token make_token(TokenType type, size_t beg, size_t end) {
         Token token{type, beg, end};
         token.text = source.substr(beg, end - beg);
         return token;

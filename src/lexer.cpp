@@ -18,10 +18,7 @@
         break;
 
 inline bool is_identifier_char(char c) {
-    if (std::isalpha(c) || c == '_') {
-        return true;
-    }
-    return false;
+    return std::isalpha(c) || c == '_';
 }
 
 LexException::LexException(const std::string& exception_message, size_t start, size_t end)
@@ -36,7 +33,7 @@ std::string LexException::write() {
     return string;
 }
 
-Lexer::Lexer(const std::string& source) : source{source}, source_lines{}, cursor{0} {
+Lexer::Lexer(const std::string& source) : source{source}, cursor{0} {
     size_t start = 0;
     size_t end = 0;
 
@@ -59,7 +56,7 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
             }
 
             if (peek() == '\0') {
-                tokens.push_back(Token{TokenType::EOF, cursor, cursor + 1});
+                tokens.emplace_back(TokenType::EOF, cursor, cursor + 1);
                 break;
             } else if (is_identifier_char(peek())) {
                 size_t start = cursor;
@@ -71,7 +68,7 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                 }
 
                 std::string identifier = source.substr(start, cursor - start);
-                TokenType type;
+                TokenType type = TokenType::IDENTIFIER;
 
                 if (is_keyword(identifier)) {
                     if (identifier == "def") {
@@ -85,8 +82,6 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                         std::cout << "Keyword NOT implemented yet";
                         type = TokenType::INVALID;
                     }
-                } else {
-                    type = TokenType::IDENTIFIER;
                 }
 
                 tokens.push_back(make_token(type, start, cursor));
@@ -102,44 +97,47 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                 TokenType type;
 
                 switch (suffix) {
-                case 'U' | 'u': // Unsigned
-                    try {
-                        type = TokenType::UINT64;
+                    case 'u':
+                    case 'U': // Unsigned
+                        try {
+                            type = TokenType::UINT64;
+                            advance();
+                        } catch (...) {
+                            // L
+                            tokens.push_back(make_token(TokenType::INVALID, start, cursor));
+                            throw LexException{"Value " + token_string + " too large to store in an uint64", start,
+                                               cursor};
+                        }
+                        break;
+
+                    case '.': { // Floating point
+                        size_t decimal_start = cursor;
                         advance();
-                    } catch (...) {
-                        // L
-                        tokens.push_back(make_token(TokenType::INVALID, start, cursor));
-                        throw LexException{"Value " + token_string + " too large to store in an uint64", start, cursor};
-                    }
-                    break;
+                        while (std::iswdigit(peek())) {
+                            advance();
+                        }
+                        std::string float_string = token_string + source.substr(decimal_start, cursor - decimal_start);
 
-                case '.': { // Floating point
-                    size_t decimal_start = cursor;
-                    advance();
-                    while (std::iswdigit(peek())) {
-                        advance();
+                        try {
+                            type = TokenType::FLOAT64;
+                        } catch (...) {
+                            tokens.push_back(make_token(TokenType::INVALID, start, cursor));
+                            throw LexException{"Value " + float_string + " too large to store in an float64", start,
+                                               cursor};
+                        }
+                        break;
                     }
-                    std::string float_string = token_string + source.substr(decimal_start, cursor - decimal_start);
 
-                    try {
-                        type = TokenType::FLOAT64;
-                    } catch (...) {
-                        tokens.push_back(make_token(TokenType::INVALID, start, cursor));
-                        throw LexException{"Value " + float_string + " too large to store in an float64", start,
-                                           cursor};
-                    }
-                    break;
-                }
-
-                default:
-                    try {
-                        type = TokenType::INT64;
-                    } catch (...) {
-                        // L
-                        tokens.push_back(make_token(TokenType::INVALID, start, cursor));
-                        throw LexException{"Value " + token_string + " too large to store in an int64", start, cursor};
-                    }
-                    break;
+                    default:
+                        try {
+                            type = TokenType::INT64;
+                        } catch (...) {
+                            // L
+                            tokens.push_back(make_token(TokenType::INVALID, start, cursor));
+                            throw LexException{"Value " + token_string + " too large to store in an int64", start,
+                                               cursor};
+                        }
+                        break;
                 }
 
                 tokens.push_back(make_token(type, start, cursor));
@@ -166,8 +164,10 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                             // Goofy
                             HANDLE_ESCAPE_SEQUENCE(U'a', U'\a')
                             HANDLE_ESCAPE_SEQUENCE(U'b', U'\b')
-                            HANDLE_ESCAPE_SEQUENCE(U'e', U'\e')
+                            HANDLE_ESCAPE_SEQUENCE(U'e', U'\e') // NOLINT
                             HANDLE_ESCAPE_SEQUENCE(U'f', U'\f')
+                            default:
+                                throw LexException{"Unrecognized escape sequence", start, cursor};
                         }
                     } else {
                         string += advance();
@@ -180,49 +180,49 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                 tokens.push_back(token);
             } else {
                 switch (peek()) {
-                case '-':
-                    advance();
-                    if (peek() == '>') { // Arrow (->)
+                    case '-':
                         advance();
-                        tokens.push_back(make_token(TokenType::ARROW, cursor - 2, cursor));
-                    } else { // Subtraction
-                        tokens.push_back(make_token(TokenType::SUB, cursor - 1, cursor));
-                    }
-                    break;
-
-                case '/':
-                    advance();
-                    if (peek() == '/') { // Comment
-                        advance();
-                        while (peek() != '\0') {
-                            if (advance() == '\n') {
-                                break;
-                            }
+                        if (peek() == '>') { // Arrow (->)
+                            advance();
+                            tokens.push_back(make_token(TokenType::ARROW, cursor - 2, cursor));
+                        } else { // Subtraction
+                            tokens.push_back(make_token(TokenType::SUB, cursor - 1, cursor));
                         }
-                    } else { // Division
-                        tokens.push_back(make_token(TokenType::DIV, cursor - 1, cursor));
-                    }
-                    break;
+                        break;
 
-                    HANDLE_SIMPLE(TokenType::ADD, '+')
-                    HANDLE_SIMPLE(TokenType::MUL, '*')
-                    HANDLE_SIMPLE(TokenType::ASSIGN, '=')
+                    case '/':
+                        advance();
+                        if (peek() == '/') { // Comment
+                            advance();
+                            while (peek() != '\0') {
+                                if (advance() == '\n') {
+                                    break;
+                                }
+                            }
+                        } else { // Division
+                            tokens.push_back(make_token(TokenType::DIV, cursor - 1, cursor));
+                        }
+                        break;
 
-                    HANDLE_SIMPLE(TokenType::OPEN_PARENTHESES, '(')
-                    HANDLE_SIMPLE(TokenType::CLOSE_PARENTHESES, ')')
-                    HANDLE_SIMPLE(TokenType::OPEN_BRACKETS, '[')
-                    HANDLE_SIMPLE(TokenType::CLOSE_BRACKETS, ']')
-                    HANDLE_SIMPLE(TokenType::OPEN_BRACES, '{')
-                    HANDLE_SIMPLE(TokenType::CLOSE_BRACES, '}')
+                        HANDLE_SIMPLE(TokenType::ADD, '+')
+                        HANDLE_SIMPLE(TokenType::MUL, '*')
+                        HANDLE_SIMPLE(TokenType::ASSIGN, '=')
 
-                    HANDLE_SIMPLE(TokenType::DOT, '.')
-                    HANDLE_SIMPLE(TokenType::COMMA, ',')
-                    HANDLE_SIMPLE(TokenType::COLON, ':')
-                    HANDLE_SIMPLE(TokenType::SEMICOLON, ';')
+                        HANDLE_SIMPLE(TokenType::OPEN_PARENTHESES, '(')
+                        HANDLE_SIMPLE(TokenType::CLOSE_PARENTHESES, ')')
+                        HANDLE_SIMPLE(TokenType::OPEN_BRACKETS, '[')
+                        HANDLE_SIMPLE(TokenType::CLOSE_BRACKETS, ']')
+                        HANDLE_SIMPLE(TokenType::OPEN_BRACES, '{')
+                        HANDLE_SIMPLE(TokenType::CLOSE_BRACES, '}')
 
-                default:
-                    tokens.push_back(make_token(TokenType::INVALID, cursor, cursor + 1));
-                    advance();
+                        HANDLE_SIMPLE(TokenType::DOT, '.')
+                        HANDLE_SIMPLE(TokenType::COMMA, ',')
+                        HANDLE_SIMPLE(TokenType::COLON, ':')
+                        HANDLE_SIMPLE(TokenType::SEMICOLON, ';')
+
+                    default:
+                        tokens.push_back(make_token(TokenType::INVALID, cursor, cursor + 1));
+                        advance();
                 }
             }
         } catch (LexException& exception) {
