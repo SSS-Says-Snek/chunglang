@@ -40,7 +40,11 @@
         {
             "label": "Run and Compile `test.chung`",
             "type": "shell",
-            "command": "./build/chung parse test.chung"
+            "command": "./build/chung parse test.chung",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
         },
 
         {

@@ -35,6 +35,10 @@ void run_help() {
     std::cout << "    chung parse <file.chung>   Lexes and parses the file, then dumps the AST\n";
 }
 
+void print(int64_t int64) {
+    printf("%" PRId64 "\n", int64);
+}
+
 void run_parse(std::vector<std::string>& args) {
     std::cout << ANSI_BOLD << "Running Chungussy " << chung_ver_string() << '\n' << ANSI_RESET;
     if (args.size() != 2) {
@@ -90,7 +94,15 @@ void run_parse(std::vector<std::string>& args) {
     }
 
     if (!statements.empty()) {
-        setup_prelude(ctx);
+
+    std::vector<llvm::Type*> print_params{llvm::Type::getInt64Ty(ctx.context)};
+    llvm::Type* print_return_type = llvm::Type::getVoidTy(ctx.context);
+    llvm::FunctionType* print_func_type = llvm::FunctionType::get(print_return_type, print_params, false);
+    llvm::Function* print_func = llvm::Function::Create(print_func_type, llvm::Function::ExternalLinkage, "printf", ctx.module.get());
+    
+    for (auto& arg: print_func->args()) {
+        arg.setName("value");
+    }
 
         std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET;
         std::cout << ANSI_BOLD << "                 Program AST                  \n" << ANSI_RESET;
@@ -109,7 +121,7 @@ void run_parse(std::vector<std::string>& args) {
         if (!parse_exceptions.empty()) {
             return;
         }
-
+        
         std::cout << "\n\n";
         std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET;
         std::cout << ANSI_BOLD << "      Module IR (temporary trust me bro)      \n" << ANSI_RESET;
@@ -169,10 +181,12 @@ void run_parse(std::vector<std::string>& args) {
 
         pass.run(*ctx.module);
         dest.flush();
+
         
         // IDK /shrug
-        system("clang++ $(llvm-config --cxxflags) src/library/prelude.cpp -Iinclude -c -o chungbuild/prelude.o");
-        system((std::string{"clang++ $(llvm-config --ldflags --libs) "} + output_filepath + " chungbuild/prelude.o -o chungbuild/output.out").c_str());
+        // system("clang++ src/library/prelude.cpp -Iinclude -c -o chungbuild/prelude.o");
+        // system((std::string{"clang++ $(llvm-config --ldflags --libs) "} + output_filepath + " chungbuild/prelude.o -o chungbuild/output.out").c_str());
+        system((std::string{"clang++ -fno-pie -no-pie "} + output_filepath + " -o chungbuild/output.out").c_str());
     }
 }
 
