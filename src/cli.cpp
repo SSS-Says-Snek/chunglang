@@ -17,7 +17,7 @@
 
 #include "chung/utils/ansi.hpp"
 
-#include "chung/library/prelude.hpp"
+#include "chung/library/setup_prelude.hpp"
 
 #define CHUNG_VER_MAJOR 0
 #define CHUNG_VER_MINOR 0
@@ -34,10 +34,6 @@ void run_help() {
     std::cout << "    chung [command] [options]\n\n";
     std::cout << "Commands:\n";
     std::cout << "    chung parse <file.chung>   Lexes and parses the file, then dumps the AST\n";
-}
-
-void print(int64_t int64) {
-    printf("%" PRId64 "\n", int64);
 }
 
 void run_parse(std::vector<std::string>& args) {
@@ -95,15 +91,7 @@ void run_parse(std::vector<std::string>& args) {
     }
 
     if (!statements.empty()) {
-        std::vector<llvm::Type*> print_params{llvm::Type::getInt64Ty(ctx.context)};
-        llvm::Type* print_return_type = llvm::Type::getVoidTy(ctx.context);
-        llvm::FunctionType* print_func_type = llvm::FunctionType::get(print_return_type, print_params, false);
-        llvm::Function* print_func =
-            llvm::Function::Create(print_func_type, llvm::Function::ExternalLinkage, "print", ctx.module.get());
-
-        for (auto& arg : print_func->args()) {
-            arg.setName("value");
-        }
+        setup_prelude(ctx);
 
         std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET;
         std::cout << ANSI_BOLD << "                 Program AST                  \n" << ANSI_RESET;
