@@ -27,9 +27,9 @@ public:
     static Type tfloat64;
     static Type tstring;
 
-    Type(Ty ty, std::string name): ty{ty}, name{std::move(name)} {};
+    Type(Ty ty, std::string name) : ty{ty}, name{std::move(name)} {};
 
-    inline virtual bool operator <(const Type& other) const {
+    inline virtual bool operator<(const Type& other) const {
         return ty < other.ty;
     }
 };

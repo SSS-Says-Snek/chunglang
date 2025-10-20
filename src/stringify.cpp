@@ -10,17 +10,11 @@ inline std::string indent(size_t indent_level) {
 }
 
 std::string stringify_op(const TokenType& op, bool verbose) {
-    static const char* op_names[] = {
-        "Add", "Subtract", "Multiply", "Divide", "Modulo", "Power",
-        "BitwiseAnd", "BitwiseOr", "BitwiseNot",
+    static const char* op_names[] = {"Add",   "Subtract",   "Multiply",  "Divide",     "Modulo",
+                                     "Power", "BitwiseAnd", "BitwiseOr", "BitwiseNot",
 
-        "Assign"
-    };
-    static const char *ops[] = {
-        "+", "-", "*", "/", "%", "**",
-        "&", "|", "~",
-        "="
-    };
+                                     "Assign"};
+    static const char* ops[] = {"+", "-", "*", "/", "%", "**", "&", "|", "~", "="};
 
     if (verbose) {
         return op_names[static_cast<int>(op) - 3];
@@ -29,16 +23,10 @@ std::string stringify_op(const TokenType& op, bool verbose) {
 }
 
 std::string stringify_symbol(const TokenType& symbol, bool verbose) {
-    static const char* symbol_names[] = {
-        "OpenParentheses", "CloseParentheses", "OpenBrackets", "CloseBrackets",
-        "OpenBraces", "CloseBraces",
-        "Dot", "Comma", "Colon", "Semicolon"
-    };
-    static const char* symbols[] = {
-        "(", ")", "[", "]", "{", "}",
-        "->",
-        ".", ",", ":", ";"
-    };
+    static const char* symbol_names[] = {"OpenParentheses", "CloseParentheses", "OpenBrackets", "CloseBrackets",
+                                         "OpenBraces",      "CloseBraces",      "Dot",          "Comma",
+                                         "Colon",           "Semicolon"};
+    static const char* symbols[] = {"(", ")", "[", "]", "{", "}", "->", ".", ",", ":", ";"};
 
     if (verbose) {
         return symbol_names[static_cast<int>(symbol) - 13];
@@ -47,9 +35,7 @@ std::string stringify_symbol(const TokenType& symbol, bool verbose) {
 }
 
 std::string stringify_keyword(const TokenType& keyword) {
-    static const char* keyword_names[] = {
-        "Def", "Let", "__OMG"
-    };
+    static const char* keyword_names[] = {"Def", "Let", "__OMG"};
     return keyword_names[static_cast<int>(keyword) - 24];
 }
 
@@ -90,7 +76,8 @@ std::string stringify(const Token& token) {
         return stringify_symbol(token.type, false);
     } else if (is_keyword(token.type)) {
         return stringify_keyword(token.type);
-    } else if (token.type == TokenType::INT64 || token.type == TokenType::UINT64 || token.type == TokenType::FLOAT64 || token.type == TokenType::STRING) {
+    } else if (token.type == TokenType::INT64 || token.type == TokenType::UINT64 || token.type == TokenType::FLOAT64 ||
+               token.type == TokenType::STRING) {
         return token.text;
     } else {
         return "Unknown";
@@ -139,7 +126,7 @@ std::string VarDeclareAST::stringify(size_t indent_level) {
 
     string += "\n\t" + indentation + "Name: " + name;
     string += "\n\t" + indentation + "Value:\n" + expr->stringify(indent_level + 2);
-    
+
     return string;
 }
 
@@ -155,7 +142,7 @@ std::string OmgAST::stringify(size_t indent_level) {
 std::string ExprStmtAST::stringify(size_t indent_level) {
     std::string indentation = indent(indent_level);
     std::string string{indentation + "Expression Statement:"};
-    
+
     // string += "\n\t" + indentation + "Indentation level: " + std::to_string(indent_level);
     string += "\n" + expr->stringify(indent_level + 1);
     return string;
@@ -182,7 +169,7 @@ std::string CallAST::stringify(size_t indent_level) {
     // string += "\n\t" + indentation + "Indentation level: " + std::to_string(indent_level);
     string += "\n\t" + indentation + "Name: " + callee;
     string += "\n\t" + indentation + "Arguments:\n";
-    
+
     for (size_t i = 0; i < arguments.size(); i++) {
         /*
         Function Call:
@@ -193,7 +180,8 @@ std::string CallAST::stringify(size_t indent_level) {
                 Argument 2:
                     skibidi
         */
-        string += indentation + "\t\tArgument " + std::to_string(i + 1) + ":\n" + arguments[i]->stringify(indent_level + 3);
+        string +=
+            indentation + "\t\tArgument " + std::to_string(i + 1) + ":\n" + arguments[i]->stringify(indent_level + 3);
     }
 
     if (arguments.size() == 0) {

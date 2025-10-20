@@ -4,19 +4,16 @@
 
 #include "chung/parser.hpp"
 
-#define MATCH_NO_SYNC(condition, exception_string)                   \
-    if (!(current_token().condition)) {                              \
-        push_exception(exception_string, current_token());           \
-    }                                                                \
-    eat_token();                                                     \
-
+#define MATCH_NO_SYNC(condition, exception_string)                                                                     \
+    if (!(current_token().condition)) {                                                                                \
+        push_exception(exception_string, current_token());                                                             \
+    }                                                                                                                  \
+    eat_token();
 
 int get_op_precedence(TokenType op) {
-    static const std::unordered_map<TokenType, int> op_lookup {
-        {TokenType::ADD, 1}, {TokenType::SUB, 1},
-        {TokenType::MUL, 2}, {TokenType::DIV, 2}, {TokenType::MOD, 2},
-        {TokenType::POW, 3}
-    };
+    static const std::unordered_map<TokenType, int> op_lookup{{TokenType::ADD, 1}, {TokenType::SUB, 1},
+                                                              {TokenType::MUL, 2}, {TokenType::DIV, 2},
+                                                              {TokenType::MOD, 2}, {TokenType::POW, 3}};
 
     auto result = op_lookup.find(op);
     if (result == op_lookup.end()) {
@@ -25,12 +22,13 @@ int get_op_precedence(TokenType op) {
     return result->second;
 }
 
-
-ParseException::ParseException(const std::string& exception_message, const Token& token, const std::string& source_line):
-    exception_message{exception_message}, token{token}, source_line{source_line} {}
+ParseException::ParseException(const std::string& exception_message, const Token& token, const std::string& source_line)
+    : exception_message{exception_message}, token{token}, source_line{source_line} {
+}
 
 std::string ParseException::write() {
-    std::string string{"ParseException at line " + std::to_string(token.line) + " column " + std::to_string(token.column) + ":\n"};
+    std::string string{"ParseException at line " + std::to_string(token.line) + " column " +
+                       std::to_string(token.column) + ":\n"};
     std::string carets;
 
     for (size_t i = 0; i <= source_line.length(); i++) {
@@ -44,13 +42,13 @@ std::string ParseException::write() {
     string += '\t' + source_line + '\n';
     string += '\t' + carets + '\n';
     string += exception_message + '\n';
-    
+
     return string;
 }
 
-
-Parser::Parser(const std::vector<Token> tokens, const std::vector<std::string> source_lines, Context& ctx):
-    tokens{std::move(tokens)}, source_lines{std::move(source_lines)}, ctx{ctx}, tokens_idx{0} {}
+Parser::Parser(const std::vector<Token> tokens, const std::vector<std::string> source_lines, Context& ctx)
+    : tokens{std::move(tokens)}, source_lines{std::move(source_lines)}, ctx{ctx}, tokens_idx{0} {
+}
 
 void Parser::synchronize() {
     eat_token();
@@ -227,7 +225,7 @@ std::unique_ptr<StmtAST> Parser::parse_var_declaration() {
         throw push_exception("Expected identifier to assign expression to", identifier);
     }
     eat_token();
-    
+
     std::unique_ptr<ExprAST> expr = std::make_unique<PrimitiveAST>();
     if (current_token().type == TokenType::ASSIGN) {
         // Eat '='
@@ -267,7 +265,7 @@ std::unique_ptr<StmtAST> Parser::parse_function() {
 
         Token type_name = current_token();
         match_simple(TokenType::IDENTIFIER, "Expected type in parameter declaration");
-        
+
         Type& type = ctx.get_type(type_name.text);
         if (type.ty == Ty::TINVALID) {
             throw push_exception("Type does not exist", type_name);
@@ -334,9 +332,12 @@ std::unique_ptr<StmtAST> Parser::parse_statement() {
         Token token = current_token();
         if (is_keyword(token.type)) {
             switch (token.type) {
-                case TokenType::LET: return parse_var_declaration();
-                case TokenType::DEF: return parse_function();
-                case TokenType::__OMG: return parse_omg();
+                case TokenType::LET:
+                    return parse_var_declaration();
+                case TokenType::DEF:
+                    return parse_function();
+                case TokenType::__OMG:
+                    return parse_omg();
                 default: {
                     std::cout << "You failed me.\n";
                     return nullptr;

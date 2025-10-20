@@ -4,13 +4,13 @@
 #include "chung/context.hpp"
 #include "chung/error.hpp"
 
-#define VALIDATE_TOKEN(token_, type, condition)         \
-    if (current_token().type == TokenType::EOF || ) {   \
-        return false;                                   \
-    }                                                   \
-    return current_token().type == type && conditional; \
+#define VALIDATE_TOKEN(token_, type, condition)                                                                        \
+    if (current_token().type == TokenType::EOF ||) {                                                                   \
+        return false;                                                                                                  \
+    }                                                                                                                  \
+    return current_token().type == type && conditional;
 
-class ParseException: public Exception {
+class ParseException : public Exception {
 public:
     std::string exception_message;
     Token token;
@@ -82,14 +82,14 @@ public:
     std::unique_ptr<ExprAST> parse_bin_op(int min_op_precedence, std::unique_ptr<ExprAST> lhs);
     std::unique_ptr<ExprAST> parse_primitive();
     std::unique_ptr<ExprAST> parse_primary();
-    
+
     // Statements
     std::vector<std::unique_ptr<StmtAST>> parse_block();
     std::unique_ptr<StmtAST> parse_var_declaration();
     std::unique_ptr<StmtAST> parse_function();
     std::unique_ptr<StmtAST> parse_omg();
     std::unique_ptr<StmtAST> parse_expression_statement();
-    
+
     // Heheheha
     std::unique_ptr<ExprAST> parse_expression();
     std::unique_ptr<StmtAST> parse_statement();

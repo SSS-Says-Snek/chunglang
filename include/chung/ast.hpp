@@ -15,34 +15,35 @@ public:
     virtual llvm::Value* codegen(Context& ctx) = 0;
 };
 
-class StmtAST: public AST {
+class StmtAST : public AST {
 public:
     virtual ~StmtAST() = default;
     virtual std::string stringify(size_t indent_level = 0) = 0;
     virtual llvm::Value* codegen(Context& ctx) = 0;
 };
 
-class ExprAST: public AST {
+class ExprAST : public AST {
 public:
     virtual ~ExprAST() = default;
     virtual std::string stringify(size_t indent_level = 0) = 0;
     virtual llvm::Value* codegen(Context& ctx) = 0;
 };
 
-class VarDeclareAST: public StmtAST {
+class VarDeclareAST : public StmtAST {
 public:
     std::string name;
     Type& type;
     std::unique_ptr<ExprAST> expr;
 
-    VarDeclareAST(const std::string& name, Type& type, std::unique_ptr<ExprAST> expr):
-        name{name}, type{type}, expr{std::move(expr)} {}
+    VarDeclareAST(const std::string& name, Type& type, std::unique_ptr<ExprAST> expr)
+        : name{name}, type{type}, expr{std::move(expr)} {
+    }
 
     std::string stringify(size_t indent_level = 0);
     virtual llvm::Value* codegen(Context& ctx);
 };
 
-class FunctionAST: public StmtAST {
+class FunctionAST : public StmtAST {
 public:
     std::string name;
     std::vector<VarDeclareAST> parameters;
@@ -51,60 +52,65 @@ public:
     // FOR NOW; I just want things to work
     std::unique_ptr<ExprAST> return_type;
 
-    FunctionAST(const std::string& name, std::vector<VarDeclareAST> parameters, std::vector<std::unique_ptr<StmtAST>> body):
-        name{name}, parameters{std::move(parameters)}, body{std::move(body)} {}
-
+    FunctionAST(const std::string& name, std::vector<VarDeclareAST> parameters,
+                std::vector<std::unique_ptr<StmtAST>> body)
+        : name{name}, parameters{std::move(parameters)}, body{std::move(body)} {
+    }
 
     std::string stringify(size_t indent_level = 0);
     virtual llvm::Value* codegen(Context& ctx);
 };
 
-class OmgAST: public StmtAST {
+class OmgAST : public StmtAST {
 public:
     std::unique_ptr<ExprAST> expr;
 
-    OmgAST(std::unique_ptr<ExprAST> expr): expr{std::move(expr)} {}
+    OmgAST(std::unique_ptr<ExprAST> expr) : expr{std::move(expr)} {
+    }
 
     std::string stringify(size_t indent_level = 0);
     virtual llvm::Value* codegen(Context& ctx);
 };
 
-class ExprStmtAST: public StmtAST {
+class ExprStmtAST : public StmtAST {
 public:
     std::unique_ptr<ExprAST> expr;
 
-    ExprStmtAST(std::unique_ptr<ExprAST> expr): expr{std::move(expr)} {}
+    ExprStmtAST(std::unique_ptr<ExprAST> expr) : expr{std::move(expr)} {
+    }
 
     std::string stringify(size_t indent_level = 0);
     virtual llvm::Value* codegen(Context& ctx);
 };
 
-class BinaryExprAST: public ExprAST {
+class BinaryExprAST : public ExprAST {
 public:
     TokenType op;
     std::unique_ptr<ExprAST> lhs;
     std::unique_ptr<ExprAST> rhs;
 
-    BinaryExprAST(TokenType op, std::unique_ptr<ExprAST> lhs, std::unique_ptr<ExprAST> rhs):
-        op{op}, lhs{std::move(lhs)}, rhs{std::move(rhs)} {}
-    
+    BinaryExprAST(TokenType op, std::unique_ptr<ExprAST> lhs, std::unique_ptr<ExprAST> rhs)
+        : op{op}, lhs{std::move(lhs)}, rhs{std::move(rhs)} {
+    }
+
     std::string stringify(size_t indent_level);
     virtual llvm::Value* codegen(Context& ctx);
 };
 
-class CallAST: public ExprAST {
+class CallAST : public ExprAST {
 public:
     std::string callee;
     std::vector<std::unique_ptr<ExprAST>> arguments;
 
-    CallAST(const std::string& callee, std::vector<std::unique_ptr<ExprAST>> arguments):
-        callee{callee}, arguments{std::move(arguments)} {}
-    
+    CallAST(const std::string& callee, std::vector<std::unique_ptr<ExprAST>> arguments)
+        : callee{callee}, arguments{std::move(arguments)} {
+    }
+
     std::string stringify(size_t indent_level);
     virtual llvm::Value* codegen(Context& ctx);
 };
 
-class PrimitiveAST: public ExprAST {
+class PrimitiveAST : public ExprAST {
 public:
     union {
         int64_t int64;
@@ -113,23 +119,29 @@ public:
     };
     std::string string;
 
-    enum ValueType {INVALID, INT64, UINT64, FLOAT64, STRING} value_type;
+    enum ValueType { INVALID, INT64, UINT64, FLOAT64, STRING } value_type;
 
-    PrimitiveAST(): value_type{ValueType::INVALID} {}
-    PrimitiveAST(int64_t int64): int64{int64}, value_type{ValueType::INT64} {}
-    PrimitiveAST(uint64_t uint64): uint64{uint64}, value_type{ValueType::UINT64} {}
-    PrimitiveAST(double float64): float64{float64}, value_type{ValueType::FLOAT64} {}
-    PrimitiveAST(std::string string): string{std::move(string)}, value_type{ValueType::STRING} {}
+    PrimitiveAST() : value_type{ValueType::INVALID} {
+    }
+    PrimitiveAST(int64_t int64) : int64{int64}, value_type{ValueType::INT64} {
+    }
+    PrimitiveAST(uint64_t uint64) : uint64{uint64}, value_type{ValueType::UINT64} {
+    }
+    PrimitiveAST(double float64) : float64{float64}, value_type{ValueType::FLOAT64} {
+    }
+    PrimitiveAST(std::string string) : string{std::move(string)}, value_type{ValueType::STRING} {
+    }
 
     std::string stringify(size_t indent_level = 0);
     virtual llvm::Value* codegen(Context& ctx);
 };
 
-class VariableAST: public ExprAST {
+class VariableAST : public ExprAST {
 public:
     std::string name;
 
-    VariableAST(const std::string& name): name{name} {}
+    VariableAST(const std::string& name) : name{name} {
+    }
 
     std::string stringify(size_t indent_level = 0);
     virtual llvm::Value* codegen(Context& ctx);

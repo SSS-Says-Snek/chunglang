@@ -8,19 +8,21 @@ llvm::Value* VarDeclareAST::codegen(Context& ctx) {
 
 llvm::Value* FunctionAST::codegen(Context& ctx) {
     std::vector<llvm::Type*> parameter_types;
-    for (auto& parameter: parameters) {
+    for (auto& parameter : parameters) {
         parameter_types.push_back(ctx.llvm_types.at(parameter.type));
     }
 
     // FOR NOW RET VOID
-    llvm::FunctionType* function_type = llvm::FunctionType::get(llvm::Type::getVoidTy(ctx.context), parameter_types, false);
-    llvm::Function* function = llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, name, ctx.module.get());
+    llvm::FunctionType* function_type =
+        llvm::FunctionType::get(llvm::Type::getVoidTy(ctx.context), parameter_types, false);
+    llvm::Function* function =
+        llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, name, ctx.module.get());
 
     ctx.named_values.clear();
 
     // Set parameter names
     size_t i = 0;
-    for (auto& function_parameter: function->args()) {
+    for (auto& function_parameter : function->args()) {
         auto& parameter_name = parameters[i++].name;
         function_parameter.setName(parameter_name);
         ctx.named_values[parameter_name] = &function_parameter;
@@ -30,7 +32,7 @@ llvm::Value* FunctionAST::codegen(Context& ctx) {
     llvm::BasicBlock* function_block = llvm::BasicBlock::Create(ctx.context, "entry", function);
     ctx.builder.SetInsertPoint(function_block);
 
-    for (auto& stmt: body) {
+    for (auto& stmt : body) {
         stmt->codegen(ctx);
     }
 
@@ -88,16 +90,14 @@ llvm::Value* CallAST::codegen(Context& ctx) {
     if (expected_num_args != arguments.size() && callee != "print") {
         if (callee == "print") {}
         // "Expected x argument(s) in call to function sussy, got y"
-        std::cout << "Expected " + std::to_string(expected_num_args) + " argument" + (expected_num_args != 1 ? "s " : " ") + "in call to function '" + callee +
-            "', got " + std::to_string(arguments.size()) << '\n';
+        std::cout << "Expected " + std::to_string(expected_num_args) + " argument" +
+                         (expected_num_args != 1 ? "s " : " ") + "in call to function '" + callee + "', got " +
+                         std::to_string(arguments.size())
+                  << '\n';
         return nullptr;
     }
 
     std::vector<llvm::Value*> argument_values;
-    if (callee == "print") {
-        auto *format = ctx.builder.CreateGlobalString("%" PRId64 "\n");
-        argument_values.push_back(format);
-    }
     for (auto& arg: arguments) {
         argument_values.push_back(arg->codegen(ctx));
         if (!argument_values.back()) {
