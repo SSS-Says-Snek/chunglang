@@ -1,13 +1,11 @@
 #pragma once
 
-#include <iostream>
-#include <vector>
-
 #include <cstdint>
+#include <string>
 
 #undef EOF
 
-enum class TokenType {
+enum class TokenType : uint8_t {
     EOF,
     INVALID,
 
@@ -65,15 +63,15 @@ struct Token {
     size_t beg;
     size_t end;
 
-    size_t line_beg;
-    size_t line_end;
+    size_t line_beg{};
+    size_t line_end{};
 
-    size_t line;
-    size_t column;
+    size_t line{};
+    size_t column{};
 
     std::string text;
 
-    Token(TokenType type, size_t beg, size_t end) : type{type}, beg{beg}, end{end}, line{0}, column{0} {
+    Token(TokenType type, size_t beg, size_t end) : type{type}, beg{beg}, end{end} {
     }
 };
 

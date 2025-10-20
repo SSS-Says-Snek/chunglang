@@ -1,5 +1,5 @@
 #include "chung/ast.hpp"
-#include <cinttypes>
+#include <iostream>
 
 llvm::Value* VarDeclareAST::codegen(Context& ctx) {
     // For now
@@ -94,7 +94,7 @@ llvm::Value* CallAST::codegen(Context& ctx) {
     }
 
     std::vector<llvm::Value*> argument_values;
-    for (auto& arg: arguments) {
+    for (auto& arg : arguments) {
         argument_values.push_back(arg->codegen(ctx));
         if (!argument_values.back()) {
             return nullptr;

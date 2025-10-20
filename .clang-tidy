@@ -6,6 +6,7 @@ Checks: "*,
         -fuchsia-*,
         -google-*,
         -llvm*,
+        -hicpp*,
         -modernize-use-trailing-return-type,
         -zircon-*,
         -readability-else-after-return,
@@ -16,7 +17,12 @@ Checks: "*,
         -misc-no-recursion,
         -readability-identifier-length,
         -readability-implicit-bool-conversion,
-        -cppcoreguidelines-avoid-const-or-ref-data-members
+        -cppcoreguidelines-avoid-const-or-ref-data-members,
+        -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+        -cppcoreguidelines-pro-type-union-access,
+        -concurrency-mt-unsafe,
+        -misc-use-internal-linkage,
+        -boost-use-ranges
 "
 # Checks:          'clang-diagnostic-*,clang-analyzer-*'
 WarningsAsErrors: ''

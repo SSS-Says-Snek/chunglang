@@ -1,3 +1,4 @@
+#include <iostream>
 #include <filesystem>
 
 #include "llvm/Support/FileSystem.h"
@@ -13,8 +14,8 @@
 #include "chung/file.hpp"
 #include "chung/lexer.hpp"
 #include "chung/parser.hpp"
-#include "chung/stringify.hpp"
 
+#include "chung/stringify.hpp"
 #include "chung/utils/ansi.hpp"
 
 #include "chung/library/setup_prelude.hpp"
@@ -43,7 +44,7 @@ void run_parse(std::vector<std::string>& args) {
         std::exit(1);
     }
 
-    std::string file_path = args[1];
+    const std::string& file_path = args[1];
     if (!file_exists(file_path)) {
         std::cerr << ANSI_RED << "File not found: \"" << file_path << "\" cannot be located" << '\n' << ANSI_RESET;
         std::exit(1);
@@ -129,7 +130,7 @@ void run_parse(std::vector<std::string>& args) {
         std::string target_triple = llvm::sys::getDefaultTargetTriple();
         std::string target_error;
 
-        auto target = llvm::TargetRegistry::lookupTarget(target_triple, target_error);
+        const auto* target = llvm::TargetRegistry::lookupTarget(target_triple, target_error);
         if (!target) {
             llvm::errs() << target_error;
             std::exit(1);
@@ -141,7 +142,7 @@ void run_parse(std::vector<std::string>& args) {
         llvm::TargetOptions options;
 
         auto rm = std::optional<llvm::Reloc::Model>();
-        auto target_machine = target->createTargetMachine(target_triple, cpu, features, options, rm);
+        auto* target_machine = target->createTargetMachine(target_triple, cpu, features, options, rm);
 
         ctx.module->setDataLayout(target_machine->createDataLayout());
         ctx.module->setTargetTriple(target_triple);
@@ -175,8 +176,8 @@ void run_parse(std::vector<std::string>& args) {
         // system("clang++ src/library/prelude.cpp -Iinclude -c -o chungbuild/prelude.o");
         // system((std::string{"clang++ $(llvm-config --ldflags --libs) "} + output_filepath + " chungbuild/prelude.o -o
         // chungbuild/output.out").c_str());
-        system("clang++ src/library/prelude.cpp -Iinclude -c -o chungbuild/prelude.o");
-        system("clang++ chungbuild/output.o chungbuild/prelude.o -o chungbuild/output.out");
+        system("clang++ src/library/prelude.cpp -Iinclude -c -o chungbuild/prelude.o");      // NOLINT
+        system("clang++ chungbuild/output.o chungbuild/prelude.o -o chungbuild/output.out"); // NOLINT
     }
 }
 
@@ -184,7 +185,7 @@ int main(const int argc, const char** argv) {
     std::vector<std::string> args;
     // Goofy ahh first argument
     for (int i = 1; i < argc; i++) {
-        args.push_back(argv[i]);
+        args.emplace_back(argv[i]);
     }
 
     if (args.empty()) {

@@ -17,36 +17,36 @@ public:
 
     std::string source_line;
 
-    ParseException(const std::string& exception_message, const Token& token, const std::string& source_line);
-    std::string write();
+    ParseException(std::string exception_message, Token token, std::string source_line);
+    std::string write() override;
 };
 
 class Parser {
 public:
     Parser(const std::vector<Token> tokens, const std::vector<std::string> source_lines, Context& ctx);
 
-    inline Token current_token() {
+    Token current_token() {
         if (tokens_idx >= tokens.size()) {
             return tokens[tokens.size() - 1];
         }
         return tokens[tokens_idx];
     }
 
-    inline Token previous_token() {
+    Token previous_token() {
         if (tokens_idx == 0) {
             return tokens[0];
         }
         return tokens[tokens_idx - 1];
     }
 
-    inline Token next_token() {
+    Token next_token() {
         if (tokens_idx >= tokens.size()) {
             return tokens[tokens.size() - 1];
         }
         return tokens[tokens_idx + 1];
     }
 
-    inline Token eat_token() {
+    Token eat_token() {
         if (tokens_idx >= tokens.size()) {
             return tokens[tokens.size() - 1];
         }
@@ -57,17 +57,17 @@ public:
     //     while (std::find(tokens.begin(), tokens.end(), eat_token()) != tokens.end()) {}
     // }
 
-    inline ParseException push_exception(const std::string& exception_message, const Token& token) {
+    ParseException push_exception(const std::string& exception_message, const Token& token) {
         ParseException exception{exception_message, token, source_lines[token.line - 1]};
         exceptions.push_back(exception);
         return exception;
     }
 
-    inline std::vector<ParseException> get_exceptions() {
+    std::vector<ParseException> get_exceptions() {
         return exceptions;
     }
 
-    inline void match_simple(TokenType type, const std::string& exception_str) {
+    void match_simple(TokenType type, const std::string& exception_str) {
         if (current_token().type != type) {
             throw push_exception(exception_str, current_token());
         }

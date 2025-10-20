@@ -7,7 +7,7 @@ def aa(param: int64) {
     }
 
 def main() {
-    stuff(4);
+    stuff(4 + 2);
     print(3);
     print(4);
 }

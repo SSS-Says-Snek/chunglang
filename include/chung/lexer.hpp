@@ -11,12 +11,12 @@ public:
 
     size_t start;
     size_t end;
-    size_t line;
-    size_t column;
+    size_t line{};
+    size_t column{};
 
     std::string source_line;
 
-    LexException(const std::string& exception_message, size_t start, size_t end);
+    LexException(std::string exception_message, size_t start, size_t end);
     std::string write() override;
 };
 

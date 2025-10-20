@@ -1,4 +1,6 @@
+#include <iostream>
 #include <memory>
+#include <utility>
 #include <vector>
 #include <unordered_map>
 
@@ -22,8 +24,8 @@ int get_op_precedence(TokenType op) {
     return result->second;
 }
 
-ParseException::ParseException(const std::string& exception_message, const Token& token, const std::string& source_line)
-    : exception_message{exception_message}, token{token}, source_line{source_line} {
+ParseException::ParseException(std::string exception_message, Token token, std::string source_line)
+    : exception_message{std::move(exception_message)}, token{std::move(token)}, source_line{std::move(source_line)} {
 }
 
 std::string ParseException::write() {
@@ -46,7 +48,7 @@ std::string ParseException::write() {
     return string;
 }
 
-Parser::Parser(const std::vector<Token> tokens, const std::vector<std::string> source_lines, Context& ctx)
+Parser::Parser(std::vector<Token> tokens, std::vector<std::string> source_lines, Context& ctx)
     : tokens{std::move(tokens)}, source_lines{std::move(source_lines)}, ctx{ctx}, tokens_idx{0} {
 }
 
@@ -272,7 +274,7 @@ std::unique_ptr<StmtAST> Parser::parse_function() {
         }
 
         // No default values FOR NOW
-        parameters.push_back(VarDeclareAST{parameter.text, type, nullptr});
+        parameters.emplace_back(parameter.text, type, nullptr);
 
         switch (current_token().type) {
             case TokenType::COMMA:

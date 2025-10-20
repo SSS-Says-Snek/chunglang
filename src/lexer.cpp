@@ -1,5 +1,7 @@
+#include <iostream>
 #include <string>
 #include <cwctype>
+#include <utility>
 #include <vector>
 
 #include "chung/lexer.hpp"
@@ -21,8 +23,8 @@ inline bool is_identifier_char(char c) {
     return std::isalpha(c) || c == '_';
 }
 
-LexException::LexException(const std::string& exception_message, size_t start, size_t end)
-    : exception_message{exception_message}, start{start}, end{end} {
+LexException::LexException(std::string exception_message, size_t start, size_t end)
+    : exception_message{std::move(exception_message)}, start{start}, end{end} {
 }
 
 std::string LexException::write() {
@@ -94,7 +96,7 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
 
                 char suffix = peek();
                 std::string token_string = source.substr(start, cursor - start);
-                TokenType type;
+                TokenType type = TokenType::INVALID;
 
                 switch (suffix) {
                     case 'u':

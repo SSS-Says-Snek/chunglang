@@ -1,4 +1,8 @@
 #include "chung/stringify.hpp"
+#include "chung/ast.hpp"
+#include "chung/token.hpp"
+
+#include <map>
 
 inline std::string indent(size_t indent_level) {
     std::string indentation;
@@ -10,33 +14,50 @@ inline std::string indent(size_t indent_level) {
 }
 
 std::string stringify_op(const TokenType& op, bool verbose) {
-    static const char* op_names[] = {"Add",   "Subtract",   "Multiply",  "Divide",     "Modulo",
-                                     "Power", "BitwiseAnd", "BitwiseOr", "BitwiseNot",
-
-                                     "Assign"};
-    static const char* ops[] = {"+", "-", "*", "/", "%", "**", "&", "|", "~", "="};
+    static const std::map<TokenType, std::pair<std::string, std::string>> token_to_string = {
+        {TokenType::ADD, {"Add", "+"}},
+        {TokenType::SUB, {"Subtract", "-"}},
+        {TokenType::MUL, {"Multiply", "*"}},
+        {TokenType::DIV, {"Divide", "/"}},
+        {TokenType::MOD, {"Modulo", "%"}},
+        {TokenType::POW, {"Power", "**"}},
+        {TokenType::BITWISE_AND, {"BitwiseAnd", "&"}},
+        {TokenType::BITWISE_OR, {"BitwiseOr", "|"}},
+        {TokenType::BITWISE_NOT, {"BitwiseNot", "~"}},
+        {TokenType::ASSIGN, {"Assign", "="}}};
 
     if (verbose) {
-        return op_names[static_cast<int>(op) - 3];
+        return token_to_string.at(op).first;
     }
-    return ops[static_cast<int>(op) - 3];
+    return token_to_string.at(op).second;
 }
 
 std::string stringify_symbol(const TokenType& symbol, bool verbose) {
-    static const char* symbol_names[] = {"OpenParentheses", "CloseParentheses", "OpenBrackets", "CloseBrackets",
-                                         "OpenBraces",      "CloseBraces",      "Dot",          "Comma",
-                                         "Colon",           "Semicolon"};
-    static const char* symbols[] = {"(", ")", "[", "]", "{", "}", "->", ".", ",", ":", ";"};
+    static const std::map<TokenType, std::pair<std::string, std::string>> token_to_string = {
+        {TokenType::OPEN_PARENTHESES, {"OpenParentheses", "("}},
+        {TokenType::CLOSE_PARENTHESES, {"CloseParentheses", ")"}},
+        {TokenType::OPEN_BRACKETS, {"OpenBrackets", "["}},
+        {TokenType::CLOSE_BRACKETS, {"CloseBrackets", "]"}},
+        {TokenType::OPEN_BRACES, {"OpenBraces", "{"}},
+        {TokenType::CLOSE_BRACES, {"CloseBraces", "}"}},
+        {TokenType::DOT, {"Dot", "."}},
+        {TokenType::COMMA, {"Comma", ","}},
+        {TokenType::COLON, {"Colon", ":"}},
+        {TokenType::SEMICOLON, {"Semicolon", ";"}}};
 
     if (verbose) {
-        return symbol_names[static_cast<int>(symbol) - 13];
+        return token_to_string.at(symbol).first;
     }
-    return std::string{symbols[static_cast<int>(symbol) - 13]};
+    return token_to_string.at(symbol).second;
 }
 
 std::string stringify_keyword(const TokenType& keyword) {
-    static const char* keyword_names[] = {"Def", "Let", "__OMG"};
-    return keyword_names[static_cast<int>(keyword) - 24];
+    static const std::map<TokenType, std::string> token_to_string = {
+        {TokenType::DEF, "Def"},
+        {TokenType::LET, "Let"},
+        {TokenType::__OMG, "__OMG"},
+    };
+    return token_to_string.at(keyword);
 }
 
 std::string stringify_type(const TokenType& type) {
@@ -68,8 +89,6 @@ std::string stringify(const Token& token) {
         return "EOF";
     } else if (token.type == TokenType::INVALID) {
         return "Invalid";
-    } else if (token.type == TokenType::IDENTIFIER) {
-        return token.text;
     } else if (is_operator(token.type)) {
         return stringify_op(token.type, false);
     } else if (is_symbol(token.type)) {
@@ -77,7 +96,7 @@ std::string stringify(const Token& token) {
     } else if (is_keyword(token.type)) {
         return stringify_keyword(token.type);
     } else if (token.type == TokenType::INT64 || token.type == TokenType::UINT64 || token.type == TokenType::FLOAT64 ||
-               token.type == TokenType::STRING) {
+               token.type == TokenType::STRING || token.type == TokenType::IDENTIFIER) {
         return token.text;
     } else {
         return "Unknown";

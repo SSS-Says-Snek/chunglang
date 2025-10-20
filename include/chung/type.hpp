@@ -1,8 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 
-enum class Ty {
+enum class Ty : uint8_t {
     // IG a placeholder for type inferencing?
     TNONE,
 
@@ -29,7 +30,8 @@ public:
 
     Type(Ty ty, std::string name) : ty{ty}, name{std::move(name)} {};
 
-    inline virtual bool operator<(const Type& other) const {
+    // Needed for std::map and comparisons??
+    bool operator<(const Type& other) const {
         return ty < other.ty;
     }
 };
