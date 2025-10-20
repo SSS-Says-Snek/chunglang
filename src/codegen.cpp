@@ -78,17 +78,13 @@ llvm::Value* BinaryExprAST::codegen(Context& ctx) {
 
 llvm::Value* CallAST::codegen(Context& ctx) {
     llvm::Function* function = ctx.module->getFunction(callee);
-    if (callee == "print") {
-        function = ctx.module->getFunction("printf");
-    }
     if (!function) {
         std::cout << "No function named '" + callee + "'\n";
         return nullptr;
     }
 
     size_t expected_num_args = function->arg_size();
-    if (expected_num_args != arguments.size() && callee != "print") {
-        if (callee == "print") {}
+    if (expected_num_args != arguments.size()) {
         // "Expected x argument(s) in call to function sussy, got y"
         std::cout << "Expected " + std::to_string(expected_num_args) + " argument" +
                          (expected_num_args != 1 ? "s " : " ") + "in call to function '" + callee + "', got " +
