@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "chung/parser.hpp"
+#include "chung/utils/ansi.hpp"
 
 #define MATCH_NO_SYNC(condition, exception_string)                                                                     \
     if (!(current_token().condition)) {                                                                                \
@@ -28,22 +29,40 @@ ParseException::ParseException(std::string exception_message, Token token, std::
     : exception_message{std::move(exception_message)}, token{std::move(token)}, source_line{std::move(source_line)} {
 }
 
-std::string ParseException::write() {
-    std::string string{"ParseException at line " + std::to_string(token.line) + " column " +
-                       std::to_string(token.column) + ":\n"};
+std::string ParseException::write(const std::vector<std::string>& source_lines) {
+    std::string string{ANSI_RED};
+    string += "ParseException at line " + std::to_string(token.line) + " column " +
+                       std::to_string(token.column) + ":\n" + ANSI_RESET;
     std::string carets;
 
     for (size_t i = 0; i <= source_line.length(); i++) {
+        if (i == token.line_beg) {
+            carets += ANSI_RED;
+        }
+        if (i == token.line_end) {
+            carets += ANSI_RESET;
+        }
+
         if (token.line_beg <= i && i < token.line_end) {
             carets += '^';
         } else {
             carets += '~';
         }
+
     }
 
-    string += '\t' + source_line + '\n';
-    string += '\t' + carets + '\n';
-    string += exception_message + '\n';
+    if (token.line > 0) {
+        string += "|\t" + source_lines[token.line - 1 - 1] + '\n';
+    }
+
+    string += "|\t";
+    string += std::string{ANSI_RED} + source_line + ANSI_RESET + '\n';
+    string += "|\t" + carets + '\n';
+
+    if (token.line < source_lines.size()) {
+        string += "|\t" + source_lines[token.line] + '\n';
+    }
+    string += ANSI_RED + exception_message + ANSI_RESET + '\n';
 
     return string;
 }

@@ -1,5 +1,3 @@
-#pragma once
-
 #include <vector>
 
 #include "chung/token.hpp"
@@ -17,7 +15,7 @@ public:
     std::string source_line;
 
     LexException(std::string exception_message, size_t start, size_t end);
-    std::string write() override;
+    std::string write(const std::vector<std::string>& source_lines) override;
 };
 
 class Lexer {

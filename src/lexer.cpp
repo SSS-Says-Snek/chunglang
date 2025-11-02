@@ -27,7 +27,7 @@ LexException::LexException(std::string exception_message, size_t start, size_t e
     : exception_message{std::move(exception_message)}, start{start}, end{end} {
 }
 
-std::string LexException::write() {
+std::string LexException::write(const std::vector<std::string>& source_lines) {
     std::string string{"LexException at line " + std::to_string(line) + " column " + std::to_string(column) + ":\n"};
     string += '\t' + source_line + '\n';
     string += exception_message + '\n';

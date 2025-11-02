@@ -37,7 +37,7 @@ void run_help() {
     std::cout << "    chung parse <file.chung>   Lexes and parses the file, then dumps the AST\n";
 }
 
-void run_parse(std::vector<std::string>& args) {
+int run_parse(std::vector<std::string>& args) {
     std::cout << ANSI_BOLD << "Running Chungussy " << chung_ver_string() << '\n' << ANSI_RESET;
     if (args.size() != 2) {
         std::cerr << ANSI_RED << "Expected 1 argument, received " << args.size() - 1 << '\n' << ANSI_RESET;
@@ -62,7 +62,7 @@ void run_parse(std::vector<std::string>& args) {
     if (!lex_exceptions.empty()) {
         std::cout << ANSI_RED;
         for (auto& lex_exception : lex_exceptions) {
-            std::cout << lex_exception.write() << '\n';
+            std::cout << lex_exception.write({}) << '\n'; // TODO: Lazy for lex exceptions
         }
         std::cout << ANSI_RESET;
     } else {
@@ -77,16 +77,15 @@ void run_parse(std::vector<std::string>& args) {
     }
 
     std::cout << "Parsing " << file_path << '\n';
-    Parser parser{tokens, lexer.get_source_lines(), ctx};
+    std::vector<std::string> source_lines = lexer.get_source_lines();
+    Parser parser{tokens, source_lines, ctx};
     auto statements = parser.parse();
     auto parse_exceptions = parser.get_exceptions();
 
     if (!parse_exceptions.empty()) {
-        std::cout << ANSI_RED;
         for (auto& parse_exception : parse_exceptions) {
-            std::cout << parse_exception.write() << '\n';
+            std::cout << parse_exception.write(source_lines) << '\n';
         }
-        std::cout << ANSI_RESET;
     } else {
         std::cout << ANSI_GREEN << "Successfully parsed with no exceptions!\n\n" << ANSI_RESET;
     }
@@ -109,7 +108,7 @@ void run_parse(std::vector<std::string>& args) {
         }
 
         if (!parse_exceptions.empty()) {
-            return;
+            return 1;
         }
 
         std::cout << "\n\n";
@@ -127,10 +126,12 @@ void run_parse(std::vector<std::string>& args) {
         llvm::InitializeAllAsmParsers();
         llvm::InitializeAllAsmPrinters();
 
-        std::string target_triple = llvm::sys::getDefaultTargetTriple();
+        std::string target_triple_str = llvm::sys::getDefaultTargetTriple();
+        llvm::Triple triple{target_triple_str};
+
         std::string target_error;
 
-        const auto* target = llvm::TargetRegistry::lookupTarget(target_triple, target_error);
+        const auto* target = llvm::TargetRegistry::lookupTarget(triple, target_error);
         if (!target) {
             llvm::errs() << target_error;
             std::exit(1);
@@ -142,10 +143,10 @@ void run_parse(std::vector<std::string>& args) {
         llvm::TargetOptions options;
 
         auto rm = std::optional<llvm::Reloc::Model>();
-        auto* target_machine = target->createTargetMachine(target_triple, cpu, features, options, rm);
+        auto* target_machine = target->createTargetMachine(triple, cpu, features, options, rm);
 
         ctx.module->setDataLayout(target_machine->createDataLayout());
-        ctx.module->setTargetTriple(target_triple);
+        ctx.module->setTargetTriple(triple);
 
         // Create chungbuild directory
         std::string output_filename{"output.o"};
@@ -179,6 +180,8 @@ void run_parse(std::vector<std::string>& args) {
         system("clang++ src/library/prelude.cpp -Iinclude -c -o chungbuild/prelude.o");      // NOLINT
         system("clang++ chungbuild/output.o chungbuild/prelude.o -o chungbuild/output.out"); // NOLINT
     }
+
+    return 0;
 }
 
 int main(const int argc, const char** argv) {
@@ -197,7 +200,7 @@ int main(const int argc, const char** argv) {
     if (command == "help") {
         run_help();
     } else if (command == "parse") {
-        run_parse(args);
+        return run_parse(args);
     }
 
     return 0;

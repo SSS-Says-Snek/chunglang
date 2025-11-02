@@ -18,7 +18,7 @@ public:
     std::string source_line;
 
     ParseException(std::string exception_message, Token token, std::string source_line);
-    std::string write() override;
+    std::string write(const std::vector<std::string>& source_lines) override;
 };
 
 class Parser {

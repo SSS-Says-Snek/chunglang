@@ -41,6 +41,6 @@ target_compile_options(chung PRIVATE -Wall -Wextra -Wpedantic)
 
 # -lLLVM-20 !!!!
 # llvm_map_components_to_libnames(llvm_libs -20)
-llvm_config(chung -20)
+llvm_config(chung -21)
 
 target_link_libraries(chung ${llvm_libs})
