@@ -1,5 +1,6 @@
 #include "chung/ast.hpp"
 #include <iostream>
+#include <llvm/IR/BasicBlock.h>
 
 llvm::Value* VarDeclareAST::codegen(Context& ctx) {
     // For now
@@ -43,6 +44,45 @@ llvm::Value* FunctionAST::codegen(Context& ctx) {
     return nullptr;
 }
 
+llvm::Value* IfExprAST::codegen(Context& ctx) {
+    llvm::Function* current_function = ctx.builder.GetInsertBlock()->getParent();
+
+    llvm::BasicBlock* if_block = llvm::BasicBlock::Create(ctx.context, "if.true");
+    llvm::BasicBlock* cont_block = llvm::BasicBlock::Create(ctx.context, "if.cont"); // Exits the if
+
+    llvm::BasicBlock* else_block = cont_block;
+    if (!else_body.empty()) {
+        else_block = llvm::BasicBlock::Create(ctx.context, "if.else");
+    }
+
+    llvm::Value* condition_code = condition->codegen(ctx);
+
+    llvm::Value* boolean =
+        ctx.builder.CreateICmpNE(condition_code, llvm::ConstantInt::get(ctx.context, llvm::APInt{64, 0, true}));
+
+    ctx.builder.CreateCondBr(boolean, if_block, else_block);
+
+    if_block->insertInto(current_function);
+    ctx.builder.SetInsertPoint(if_block);
+    for (auto& stmt : body) {
+        stmt->codegen(ctx);
+    }
+    ctx.builder.CreateBr(cont_block);
+
+    if (!else_body.empty()) {
+        else_block->insertInto(current_function);
+        ctx.builder.SetInsertPoint(else_block);
+        for (auto& stmt : else_body) {
+            stmt->codegen(ctx);
+        }
+        ctx.builder.CreateBr(cont_block);
+    }
+
+    cont_block->insertInto(current_function);
+    ctx.builder.SetInsertPoint(cont_block);
+    return nullptr;
+}
+
 llvm::Value* OmgAST::codegen(Context& ctx) {
     std::cerr << "NOT IMPLEMENTED yet (OmgAST)\n";
     return nullptr;
@@ -70,6 +110,10 @@ llvm::Value* BinaryExprAST::codegen(Context& ctx) {
         case TokenType::MUL:
             lhs_code->getType()->print(llvm::outs());
             return ctx.builder.CreateMul(lhs_code, rhs_code);
+        case TokenType::GREATER_THAN:
+            lhs_code->getType()->print(llvm::outs());
+            return ctx.builder.CreateICmpSGT(
+                lhs_code, rhs_code); // TODO: ICmpSGT Is only for I-nteger Cmp-arison with S-igned G-reater T-han
         default:
             std::cerr << "NOT IMPLEMENTED YET (BinaryExprAST)\n";
     }

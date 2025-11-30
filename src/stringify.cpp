@@ -24,6 +24,11 @@ std::string stringify_op(const TokenType& op, bool verbose) {
         {TokenType::BITWISE_AND, {"BitwiseAnd", "&"}},
         {TokenType::BITWISE_OR, {"BitwiseOr", "|"}},
         {TokenType::BITWISE_NOT, {"BitwiseNot", "~"}},
+        {TokenType::GREATER_EQUAL, {"GreaterEqual", ">="}},
+        {TokenType::GREATER_THAN, {"GreaterThan", ">"}},
+        {TokenType::LESS_EQUAL, {"LessEqual", "<="}},
+        {TokenType::LESS_THAN, {"LessThan", "<"}},
+        {TokenType::EQUAL, {"Equal", "=="}},
         {TokenType::ASSIGN, {"Assign", "="}}};
 
     if (verbose) {
@@ -53,9 +58,8 @@ std::string stringify_symbol(const TokenType& symbol, bool verbose) {
 
 std::string stringify_keyword(const TokenType& keyword) {
     static const std::map<TokenType, std::string> token_to_string = {
-        {TokenType::DEF, "Def"},
-        {TokenType::LET, "Let"},
-        {TokenType::__OMG, "__OMG"},
+        {TokenType::DEF, "Def"},   {TokenType::LET, "Let"},     {TokenType::IF, "If"},
+        {TokenType::ELSE, "Else"}, {TokenType::__OMG, "__OMG"},
     };
     return token_to_string.at(keyword);
 }
@@ -114,6 +118,27 @@ std::string StmtAST::stringify(size_t indent_level) {
 
 std::string ExprAST::stringify(size_t indent_level) {
     return indent(indent_level) + "Goofy expression";
+}
+
+std::string IfExprAST::stringify(size_t indent_level) {
+    std::string indentation = indent(indent_level);
+    std::string string{indentation + "If Conditional:"};
+
+    string += "\n\t" + indentation + "Condition:";
+    string += "\n" + condition->stringify(indent_level + 2);
+    string += "\n\t" + indentation + "Body:";
+    for (auto& statement : body) {
+        string += "\n" + statement->stringify(indent_level + 2);
+    }
+
+    if (!else_body.empty()) {
+        string += "\n\t" + indentation + "Else Body:";
+        for (auto& statement : else_body) {
+            string += "\n" + statement->stringify(indent_level + 2);
+        }
+    }
+
+    return string;
 }
 
 std::string FunctionAST::stringify(size_t indent_level) {

@@ -88,7 +88,9 @@ public:
     std::unique_ptr<StmtAST> parse_var_declaration();
     std::unique_ptr<StmtAST> parse_function();
     std::unique_ptr<StmtAST> parse_omg();
-    std::unique_ptr<StmtAST> parse_expression_statement();
+    std::unique_ptr<StmtAST> parse_expression_statement(bool require_semicolons);
+
+    std::unique_ptr<ExprAST> parse_if_expr();
 
     // Heheheha
     std::unique_ptr<ExprAST> parse_expression();

@@ -10,4 +10,10 @@ def main() {
     stuff(4 + 2);
     print(3);
     print(4);
+    
+    if (2 > 2) {
+        print(67);
+    } else {
+        print(111);
+    }
 }

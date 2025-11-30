@@ -27,6 +27,7 @@ public:
     static Type tint64;
     static Type tfloat64;
     static Type tstring;
+    static Type tuser;
 
     Type(Ty ty, std::string name) : ty{ty}, name{std::move(name)} {};
 

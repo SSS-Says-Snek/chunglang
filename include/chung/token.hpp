@@ -22,6 +22,12 @@ enum class TokenType : uint8_t {
     BITWISE_NOT,
     ASSIGN,
 
+    GREATER_THAN,
+    LESS_THAN,
+    GREATER_EQUAL,
+    LESS_EQUAL,
+    EQUAL,
+
     OPEN_PARENTHESES,
     CLOSE_PARENTHESES,
     OPEN_BRACKETS,
@@ -37,6 +43,8 @@ enum class TokenType : uint8_t {
     DEF,
     LET,
     RETURN,
+    IF,
+    ELSE,
     __OMG,
 
     // Primitives
