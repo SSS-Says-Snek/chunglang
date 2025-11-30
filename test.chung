@@ -4,10 +4,10 @@ def stuff(param: int64) {
 
 def aa(param: int64) {
     print(param);
-    }
+}
 
 def main() {
-    stuff(4 + 2)
-    print(3)
+    stuff(4 + 2);
+    print(3);
     print(4);
 }
