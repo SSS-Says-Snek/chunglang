@@ -74,8 +74,8 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                 TokenType type = TokenType::IDENTIFIER;
 
                 if (is_keyword(identifier)) {
-                    if (identifier == "def") {
-                        type = TokenType::DEF;
+                    if (identifier == "func") {
+                        type = TokenType::FUNC;
                     } else if (identifier == "let") {
                         type = TokenType::LET;
                     } else if (identifier == "if") {

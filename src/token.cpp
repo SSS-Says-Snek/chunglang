@@ -4,14 +4,14 @@
 #include "chung/token.hpp"
 
 bool is_keyword(const std::string& identifier) {
-    static const std::vector<std::string> keyword_identifiers{"def", "let", "__omg", "return", "if", "else"};
+    static const std::vector<std::string> keyword_identifiers{"func", "let", "__omg", "return", "if", "else"};
 
     return std::find(std::begin(keyword_identifiers), std::end(keyword_identifiers), identifier) !=
            std::end(keyword_identifiers);
 }
 
 bool is_keyword(TokenType keyword) {
-    static const std::vector<TokenType> keywords{TokenType::DEF,    TokenType::LET, TokenType::__OMG,
+    static const std::vector<TokenType> keywords{TokenType::FUNC,    TokenType::LET, TokenType::__OMG,
                                                  TokenType::RETURN, TokenType::IF,  TokenType::ELSE};
 
     return std::find(std::begin(keywords), std::end(keywords), keyword) != std::end(keywords);

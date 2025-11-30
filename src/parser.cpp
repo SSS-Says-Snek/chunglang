@@ -269,12 +269,12 @@ std::unique_ptr<StmtAST> Parser::parse_var_declaration() {
 }
 
 std::unique_ptr<StmtAST> Parser::parse_function() {
-    // Eat 'def'
+    // Eat 'func'
     eat_token();
 
     // Get and eat function name
     Token name = current_token();
-    match_simple(TokenType::IDENTIFIER, "Expected function name after 'def'");
+    match_simple(TokenType::IDENTIFIER, "Expected function name after 'func'");
 
     // Eat '('
     match_simple(TokenType::OPEN_PARENTHESES, "Expected '(' after function declaration");
@@ -388,7 +388,7 @@ std::unique_ptr<StmtAST> Parser::parse_statement() {
             switch (token.type) {
                 case TokenType::LET:
                     return parse_var_declaration();
-                case TokenType::DEF:
+                case TokenType::FUNC:
                     return parse_function();
                 case TokenType::__OMG:
                     return parse_omg();

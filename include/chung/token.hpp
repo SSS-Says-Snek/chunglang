@@ -40,7 +40,7 @@ enum class TokenType : uint8_t {
     COLON,
     SEMICOLON,
 
-    DEF,
+    FUNC,
     LET,
     RETURN,
     IF,

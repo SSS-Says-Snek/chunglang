@@ -166,6 +166,10 @@ llvm::Value* PrimitiveAST::codegen(Context& ctx) {
 }
 
 llvm::Value* VariableAST::codegen(Context& ctx) {
-    std::cerr << "NOT IMPLEMENTED yet (VariableAST)\n";
-    return nullptr;
+    llvm::Value* value = ctx.named_values[name];
+    if (!value) {
+        std::cout << "Unknown variable \"" + name + "\"";
+        return nullptr;
+    }
+    return value;
 }
