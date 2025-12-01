@@ -108,6 +108,21 @@ public:
     llvm::Value* codegen(Context& ctx) override;
 };
 
+class IfExprAST : public ExprAST {
+public:
+    std::unique_ptr<ExprAST> condition;
+    std::vector<std::unique_ptr<StmtAST>> body;
+    std::vector<std::unique_ptr<StmtAST>> else_body;
+
+    IfExprAST(std::unique_ptr<ExprAST> condition, std::vector<std::unique_ptr<StmtAST>> body,
+              std::vector<std::unique_ptr<StmtAST>> else_body)
+        : condition{std::move(condition)}, body{std::move(body)}, else_body{std::move(else_body)} {
+    }
+
+    std::string stringify(size_t indent_level) override;
+    llvm::Value* codegen(Context& ctx) override;
+};
+
 class PrimitiveAST : public ExprAST {
 public:
     union {

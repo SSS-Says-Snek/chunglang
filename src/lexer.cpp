@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "chung/lexer.hpp"
+#include "chung/token.hpp"
 // #include "chung/utf.hpp"
 
 #define HANDLE_SIMPLE(op_, op_name)                                                                                    \
@@ -73,10 +74,14 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                 TokenType type = TokenType::IDENTIFIER;
 
                 if (is_keyword(identifier)) {
-                    if (identifier == "def") {
-                        type = TokenType::DEF;
+                    if (identifier == "func") {
+                        type = TokenType::FUNC;
                     } else if (identifier == "let") {
                         type = TokenType::LET;
+                    } else if (identifier == "if") {
+                        type = TokenType::IF;
+                    } else if (identifier == "else") {
+                        type = TokenType::ELSE;
                     } else if (identifier == "__omg") {
                         type = TokenType::__OMG;
                     } else {
@@ -206,21 +211,50 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                         }
                         break;
 
-                        HANDLE_SIMPLE(TokenType::ADD, '+')
-                        HANDLE_SIMPLE(TokenType::MUL, '*')
-                        HANDLE_SIMPLE(TokenType::ASSIGN, '=')
+                    case '>':
+                        advance();
+                        if (peek() == '=') {
+                            advance();
+                            tokens.push_back(make_token(TokenType::GREATER_EQUAL, cursor - 2, cursor));
+                        } else {
+                            tokens.push_back(make_token(TokenType::GREATER_THAN, cursor - 1, cursor));
+                        }
+                        break;
 
-                        HANDLE_SIMPLE(TokenType::OPEN_PARENTHESES, '(')
-                        HANDLE_SIMPLE(TokenType::CLOSE_PARENTHESES, ')')
-                        HANDLE_SIMPLE(TokenType::OPEN_BRACKETS, '[')
-                        HANDLE_SIMPLE(TokenType::CLOSE_BRACKETS, ']')
-                        HANDLE_SIMPLE(TokenType::OPEN_BRACES, '{')
-                        HANDLE_SIMPLE(TokenType::CLOSE_BRACES, '}')
+                    case '<':
+                        advance();
+                        if (peek() == '=') {
+                            advance();
+                            tokens.push_back(make_token(TokenType::LESS_EQUAL, cursor - 2, cursor));
+                        } else {
+                            tokens.push_back(make_token(TokenType::LESS_THAN, cursor - 1, cursor));
+                        }
+                        break;
 
-                        HANDLE_SIMPLE(TokenType::DOT, '.')
-                        HANDLE_SIMPLE(TokenType::COMMA, ',')
-                        HANDLE_SIMPLE(TokenType::COLON, ':')
-                        HANDLE_SIMPLE(TokenType::SEMICOLON, ';')
+                    case '=':
+                        advance();
+                        if (peek() == '=') {
+                            advance();
+                            tokens.push_back(make_token(TokenType::EQUAL, cursor - 2, cursor));
+                        } else {
+                            tokens.push_back(make_token(TokenType::ASSIGN, cursor - 1, cursor));
+                        }
+                        break;
+
+                    HANDLE_SIMPLE(TokenType::ADD, '+')
+                    HANDLE_SIMPLE(TokenType::MUL, '*')
+
+                    HANDLE_SIMPLE(TokenType::OPEN_PARENTHESES, '(')
+                    HANDLE_SIMPLE(TokenType::CLOSE_PARENTHESES, ')')
+                    HANDLE_SIMPLE(TokenType::OPEN_BRACKETS, '[')
+                    HANDLE_SIMPLE(TokenType::CLOSE_BRACKETS, ']')
+                    HANDLE_SIMPLE(TokenType::OPEN_BRACES, '{')
+                    HANDLE_SIMPLE(TokenType::CLOSE_BRACES, '}')
+
+                    HANDLE_SIMPLE(TokenType::DOT, '.')
+                    HANDLE_SIMPLE(TokenType::COMMA, ',')
+                    HANDLE_SIMPLE(TokenType::COLON, ':')
+                    HANDLE_SIMPLE(TokenType::SEMICOLON, ';')
 
                     default:
                         tokens.push_back(make_token(TokenType::INVALID, cursor, cursor + 1));
