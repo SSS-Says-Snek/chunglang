@@ -58,7 +58,7 @@ public:
     // }
 
     ParseException push_exception(const std::string& exception_message, const Token& token) {
-        ParseException exception{exception_message, token, source_lines[token.line - 1]};
+        ParseException exception{exception_message, token, source_lines[token.loc.line - 1]};
         exceptions.push_back(exception);
         return exception;
     }

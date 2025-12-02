@@ -34,35 +34,35 @@ ParseException::ParseException(std::string exception_message, Token token, std::
 
 std::string ParseException::write(const std::vector<std::string>& source_lines) {
     std::string string{ANSI_RED};
-    string += "ParseException at line " + std::to_string(token.line) + " column " + std::to_string(token.column) +
+    string += "ParseException at line " + std::to_string(token.loc.line) + " column " + std::to_string(token.loc.column) +
               ":\n" + ANSI_RESET;
     std::string carets;
 
     for (size_t i = 0; i <= source_line.length(); i++) {
-        if (i == token.line_beg) {
+        if (i == token.loc.column) {
             carets += ANSI_RED;
         }
-        if (i == token.line_end) {
+        if (i == token.loc.column + token.loc.token_length) {
             carets += ANSI_RESET;
         }
 
-        if (token.line_beg <= i && i < token.line_end) {
+        if (token.loc.column <= i && i < token.loc.column + token.loc.token_length) {
             carets += '^';
         } else {
             carets += '~';
         }
     }
 
-    if (token.line > 0) {
-        string += "|\t" + source_lines[token.line - 1 - 1] + '\n';
+    if (token.loc.line > 0) {
+        string += "|\t" + source_lines[token.loc.line - 1 - 1] + '\n';
     }
 
     string += "|\t";
     string += std::string{ANSI_RED} + source_line + ANSI_RESET + '\n';
     string += "|\t" + carets + '\n';
 
-    if (token.line < source_lines.size()) {
-        string += "|\t" + source_lines[token.line] + '\n';
+    if (token.loc.line < source_lines.size()) {
+        string += "|\t" + source_lines[token.loc.line] + '\n';
     }
     string += ANSI_RED + exception_message + ANSI_RESET + '\n';
 

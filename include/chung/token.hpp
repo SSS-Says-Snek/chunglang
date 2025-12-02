@@ -54,16 +54,11 @@ enum class TokenType : uint8_t {
     STRING
 };
 
-struct TokenVal {
-    union {
-        uint64_t uint64;
-        int64_t int64;
-        double float64;
-    };
+struct SourceLocation {
+    size_t line{};
+    size_t column{};
 
-    // L unions (I'm lazy to write a tagged one)
-    std::string identifier;
-    std::u32string string;
+    size_t token_length{};
 };
 
 struct Token {
@@ -71,11 +66,7 @@ struct Token {
     size_t beg;
     size_t end;
 
-    size_t line_beg{};
-    size_t line_end{};
-
-    size_t line{};
-    size_t column{};
+    SourceLocation loc;
 
     std::string text;
 

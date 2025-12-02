@@ -283,20 +283,16 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
     size_t line = 1;
     size_t column = 1;
     size_t token_idx = 0;
-    size_t line_idx = 0;
     for (size_t i = 0; i <= source.length(); i++) {
         if (source[i] == '\n') {
             column = 0;
             line++;
-            line_idx = i + 1;
         }
 
         if (tokens[token_idx].beg == i) {
-            tokens[token_idx].line = line;
-            tokens[token_idx].column = column - 1;
+            tokens[token_idx].loc.line = line;
+            tokens[token_idx].loc.column = column - 1;
 
-            tokens[token_idx].line_beg = i - line_idx;
-            tokens[token_idx].line_end = tokens[token_idx].end - line_idx;
             // std::cout << stringify(tokens[token_idx].type) << " line: " << line << " column: " << column << '\n';
             token_idx++;
         }
