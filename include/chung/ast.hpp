@@ -8,24 +8,29 @@
 #include "chung/context.hpp"
 #include "chung/token.hpp"
 #include "chung/type.hpp"
+#include "chung/resolved_ast.hpp"
 
 class AST {
 public:
     virtual ~AST() = default;
     virtual std::string stringify(size_t indent_level = 0) = 0;
     virtual llvm::Value* codegen(Context& ctx) = 0;
+
+    virtual std::unique_ptr<ResolvedAST> resolve() = 0;
 };
 
 class StmtAST : public AST {
 public:
     std::string stringify(size_t indent_level = 0) override = 0;
     llvm::Value* codegen(Context& ctx) override = 0;
+    std::unique_ptr<ResolvedAST> resolve() override = 0;
 };
 
 class ExprAST : public AST {
 public:
     std::string stringify(size_t indent_level = 0) override = 0;
     llvm::Value* codegen(Context& ctx) override = 0;
+    std::unique_ptr<ResolvedAST> resolve() override = 0;
 };
 
 class VarDeclareAST : public StmtAST {
@@ -40,6 +45,7 @@ public:
 
     std::string stringify(size_t indent_level = 0) override;
     llvm::Value* codegen(Context& ctx) override;
+    std::unique_ptr<ResolvedAST> resolve() override;
 };
 
 class FunctionAST : public StmtAST {
@@ -57,6 +63,7 @@ public:
 
     std::string stringify(size_t indent_level = 0) override;
     llvm::Value* codegen(Context& ctx) override;
+    std::unique_ptr<ResolvedAST> resolve() override;
 };
 
 class OmgAST : public StmtAST {
@@ -68,6 +75,7 @@ public:
 
     std::string stringify(size_t indent_level = 0) override;
     llvm::Value* codegen(Context& ctx) override;
+    std::unique_ptr<ResolvedAST> resolve() override;
 };
 
 class ExprStmtAST : public StmtAST {
@@ -79,6 +87,7 @@ public:
 
     std::string stringify(size_t indent_level = 0) override;
     llvm::Value* codegen(Context& ctx) override;
+    std::unique_ptr<ResolvedAST> resolve() override;
 };
 
 class BinaryExprAST : public ExprAST {
@@ -93,6 +102,7 @@ public:
 
     std::string stringify(size_t indent_level) override;
     llvm::Value* codegen(Context& ctx) override;
+    std::unique_ptr<ResolvedAST> resolve() override;
 };
 
 class CallAST : public ExprAST {
@@ -106,6 +116,7 @@ public:
 
     std::string stringify(size_t indent_level) override;
     llvm::Value* codegen(Context& ctx) override;
+    std::unique_ptr<ResolvedAST> resolve() override;
 };
 
 class IfExprAST : public ExprAST {
@@ -121,32 +132,19 @@ public:
 
     std::string stringify(size_t indent_level) override;
     llvm::Value* codegen(Context& ctx) override;
+    std::unique_ptr<ResolvedAST> resolve() override;
 };
 
 class PrimitiveAST : public ExprAST {
 public:
-    union {
-        int64_t int64{};
-        uint64_t uint64;
-        double float64;
-    };
-    std::string string;
+    std::string value;
 
-    enum ValueType : int8_t { INVALID, INT64, UINT64, FLOAT64, STRING } value_type;
-
-    PrimitiveAST() : value_type{ValueType::INVALID} {
-    }
-    PrimitiveAST(int64_t int64) : int64{int64}, value_type{ValueType::INT64} {
-    }
-    PrimitiveAST(uint64_t uint64) : uint64{uint64}, value_type{ValueType::UINT64} {
-    }
-    PrimitiveAST(double float64) : float64{float64}, value_type{ValueType::FLOAT64} {
-    }
-    PrimitiveAST(std::string string) : string{std::move(string)}, value_type{ValueType::STRING} {
+    PrimitiveAST(std::string value) : value{std::move(value)} {
     }
 
     std::string stringify(size_t indent_level = 0) override;
     llvm::Value* codegen(Context& ctx) override;
+    std::unique_ptr<ResolvedAST> resolve() override;
 };
 
 class VariableAST : public ExprAST {
@@ -158,4 +156,5 @@ public:
 
     std::string stringify(size_t indent_level = 0) override;
     llvm::Value* codegen(Context& ctx) override;
+    std::unique_ptr<ResolvedAST> resolve() override;
 };
