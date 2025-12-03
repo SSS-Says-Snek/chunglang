@@ -37,7 +37,7 @@ public:
     Token make_token(TokenType type, size_t beg, size_t end) {
         Token token{type, beg, end};
         token.text = source.substr(beg, end - beg);
-        token.loc.token_length = end - beg + 1;
+        token.loc.token_length = end - beg;
         return token;
     }
 
