@@ -293,7 +293,6 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
             tokens[token_idx].loc.line = line;
             tokens[token_idx].loc.column = column - 1;
 
-            // std::cout << stringify(tokens[token_idx].type) << " line: " << line << " column: " << column << '\n';
             token_idx++;
         }
 
