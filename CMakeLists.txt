@@ -27,7 +27,7 @@ add_definitions(${LLVM_DEFINITIONS_LIST})
 add_executable(chung
     src/cli.cpp
     src/library/setup_prelude.cpp
-    src/codegen.cpp
+    # src/codegen.cpp
     src/context.cpp
     src/file.cpp
     src/lexer.cpp
@@ -35,6 +35,7 @@ add_executable(chung
     src/stringify.cpp
     src/token.cpp
     src/type.cpp
+    src/sema.cpp
 )
 target_include_directories(chung PUBLIC include)
 target_compile_options(chung PRIVATE -Wall -Wextra -Wpedantic)

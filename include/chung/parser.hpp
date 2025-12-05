@@ -84,7 +84,7 @@ public:
     std::unique_ptr<ExprAST> parse_primary();
 
     // Statements
-    std::vector<std::unique_ptr<StmtAST>> parse_block();
+    std::unique_ptr<BlockAST> parse_block();
     std::unique_ptr<StmtAST> parse_var_declaration();
     std::unique_ptr<StmtAST> parse_function();
     std::unique_ptr<StmtAST> parse_omg();

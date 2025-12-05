@@ -2,17 +2,20 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 
 enum class Ty : uint8_t {
     // IG a placeholder for type inferencing?
-    TNONE,
+    NONE,
 
-    TINVALID,
+    INVALID,
 
-    TUINT64,
-    TINT64,
-    TFLOAT64,
-    TSTRING
+    UINT64,
+    INT64,
+    FLOAT64,
+    STRING,
+    VOID,
+    USER
 };
 
 class Type {
@@ -20,14 +23,19 @@ public:
     Ty ty;
     std::string name;
 
-    static Type tnone;
-    static Type tinvalid;
+    // Default values
+    static Type none;
+    static Type invalid;
 
-    static Type tuint64;
-    static Type tint64;
-    static Type tfloat64;
-    static Type tstring;
-    static Type tuser;
+    static Type uint64;
+    static Type int64;
+    static Type float64;
+    static Type string;
+    static Type void_;
+
+    static Type user(std::string name) {
+        return {Ty::USER, std::move(name)};
+    }
 
     Type(Ty ty, std::string name) : ty{ty}, name{std::move(name)} {};
 

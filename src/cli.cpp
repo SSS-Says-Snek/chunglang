@@ -14,6 +14,7 @@
 #include "chung/file.hpp"
 #include "chung/lexer.hpp"
 #include "chung/parser.hpp"
+#include "chung/sema.hpp"
 
 #include "chung/stringify.hpp"
 #include "chung/utils/ansi.hpp"
@@ -101,15 +102,18 @@ int run_parse(std::vector<std::string>& args) {
         for (auto& statement : statements) {
             std::cout << statement->stringify() << '\n';
 
-            llvm::Value* statement_value = statement->codegen(ctx);
-            if (statement_value) {
-                statement_value->print(llvm::outs());
-            }
+            // llvm::Value* statement_value = statement->codegen(ctx);
+            // if (statement_value) {
+            //     statement_value->print(llvm::outs());
+            // }
         }
 
         if (!parse_exceptions.empty()) {
             return 1;
         }
+
+        Sema sema{std::move(statements)};
+        auto aaaa = sema.resolve();
 
         std::cout << "\n\n";
         std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET;

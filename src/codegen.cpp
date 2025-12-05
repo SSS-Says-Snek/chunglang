@@ -1,13 +1,13 @@
-#include "chung/ast.hpp"
+#include "chung/resolved_ast.hpp"
 #include <iostream>
 #include <llvm/IR/BasicBlock.h>
 
-llvm::Value* VarDeclareAST::codegen(Context& ctx) {
+llvm::Value* ResolvedVarDeclare::codegen(Context& ctx) {
     // For now
     return expr->codegen(ctx);
 }
 
-llvm::Value* FunctionAST::codegen(Context& ctx) {
+llvm::Value* ResolvedFunction::codegen(Context& ctx) {
     std::vector<llvm::Type*> parameter_types;
     for (auto& parameter : parameters) {
         parameter_types.push_back(ctx.llvm_types.at(parameter.type));
@@ -44,7 +44,7 @@ llvm::Value* FunctionAST::codegen(Context& ctx) {
     return nullptr;
 }
 
-llvm::Value* IfExprAST::codegen(Context& ctx) {
+llvm::Value* ResolvedIfExpr::codegen(Context& ctx) {
     llvm::Function* current_function = ctx.builder.GetInsertBlock()->getParent();
 
     llvm::BasicBlock* if_block = llvm::BasicBlock::Create(ctx.context, "if.true");
@@ -83,16 +83,16 @@ llvm::Value* IfExprAST::codegen(Context& ctx) {
     return nullptr;
 }
 
-llvm::Value* OmgAST::codegen(Context& ctx) {
+llvm::Value* ResolvedOmg::codegen(Context& ctx) {
     std::cerr << "NOT IMPLEMENTED yet (OmgAST)\n";
     return nullptr;
 }
 
-llvm::Value* ExprStmtAST::codegen(Context& ctx) {
+llvm::Value* ResolvedExprStmt::codegen(Context& ctx) {
     return expr->codegen(ctx);
 }
 
-llvm::Value* BinaryExprAST::codegen(Context& ctx) {
+llvm::Value* ResolvedBinaryExpr::codegen(Context& ctx) {
     llvm::Value* lhs_code = lhs->codegen(ctx);
     llvm::Value* rhs_code = rhs->codegen(ctx);
     if (!lhs_code || !rhs_code) {
@@ -120,7 +120,7 @@ llvm::Value* BinaryExprAST::codegen(Context& ctx) {
     return nullptr;
 }
 
-llvm::Value* CallAST::codegen(Context& ctx) {
+llvm::Value* ResolvedCall::codegen(Context& ctx) {
     llvm::Function* function = ctx.module->getFunction(callee);
     if (!function) {
         std::cout << "No function named '" + callee + "'\n";
@@ -148,7 +148,7 @@ llvm::Value* CallAST::codegen(Context& ctx) {
     return ctx.builder.CreateCall(function, argument_values);
 }
 
-llvm::Value* PrimitiveAST::codegen(Context& ctx) {
+llvm::Value* ResolvedPrimitive::codegen(Context& ctx) {
     switch (value_type) {
         case ValueType::INT64:
             // std::cout << "Int\n";
@@ -165,7 +165,7 @@ llvm::Value* PrimitiveAST::codegen(Context& ctx) {
     }
 }
 
-llvm::Value* VariableAST::codegen(Context& ctx) {
+llvm::Value* ResolvedVariable::codegen(Context& ctx) {
     llvm::Value* value = ctx.named_values[name];
     if (!value) {
         std::cout << "Unknown variable \"" + name + "\"";

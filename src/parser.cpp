@@ -123,7 +123,7 @@ std::unique_ptr<ExprAST> Parser::parse_call() {
 
     // Eat ')'
     eat_token();
-    return std::make_unique<CallAST>(callee.text, std::move(arguments));
+    return std::make_unique<CallAST>(callee.loc, callee.text, std::move(arguments));
 }
 
 std::unique_ptr<ExprAST> Parser::parse_identifier() {
@@ -133,7 +133,7 @@ std::unique_ptr<ExprAST> Parser::parse_identifier() {
     if (next.type != TokenType::OPEN_PARENTHESES) {
         // Eat identifier
         eat_token();
-        return std::make_unique<VariableAST>(token.text);
+        return std::make_unique<VariableAST>(token.loc, token.text);
     }
 
     // A call
@@ -172,14 +172,14 @@ std::unique_ptr<ExprAST> Parser::parse_bin_op(int min_op_precedence, std::unique
             rhs = parse_bin_op(min_op_precedence + 1, std::move(rhs));
         }
 
-        lhs = std::make_unique<BinaryExprAST>(op.type, std::move(lhs), std::move(rhs));
+        lhs = std::make_unique<BinaryExprAST>(op.loc, op.type, std::move(lhs), std::move(rhs));
     }
 }
 
 std::unique_ptr<ExprAST> Parser::parse_primitive() {
     Token token = eat_token();
 
-    return std::make_unique<PrimitiveAST>(token.text);
+    return std::make_unique<PrimitiveAST>(token.loc, token.text);
 }
 
 std::unique_ptr<ExprAST> Parser::parse_primary() {
@@ -199,7 +199,8 @@ std::unique_ptr<ExprAST> Parser::parse_primary() {
     }
 }
 
-std::vector<std::unique_ptr<StmtAST>> Parser::parse_block() {
+std::unique_ptr<BlockAST> Parser::parse_block() {
+    SourceLocation loc = next_token().loc;
     // Eat '{'
     match_simple(TokenType::OPEN_BRACES, "Expected '{' at start of block");
 
@@ -218,7 +219,7 @@ std::vector<std::unique_ptr<StmtAST>> Parser::parse_block() {
     // std::cout << 'O' << stringify(eat_token());
     eat_token();
 
-    return statements;
+    return std::make_unique<BlockAST>(loc, std::move(statements));
 }
 
 std::unique_ptr<StmtAST> Parser::parse_var_declaration() {
@@ -232,7 +233,7 @@ std::unique_ptr<StmtAST> Parser::parse_var_declaration() {
     }
     eat_token();
 
-    std::unique_ptr<ExprAST> expr = std::make_unique<PrimitiveAST>();
+    std::unique_ptr<ExprAST> expr = std::make_unique<PrimitiveAST>(identifier.loc); // OK I'm not sure if this token should be used for SourceLocation
     if (current_token().type == TokenType::ASSIGN) {
         // Eat '='
         eat_token();
@@ -246,7 +247,7 @@ std::unique_ptr<StmtAST> Parser::parse_var_declaration() {
     match_simple(TokenType::SEMICOLON, "Expected ';' after identifier");
 
     // FOR NOW
-    return std::make_unique<VarDeclareAST>(identifier.text, Type::tnone, std::move(expr));
+    return std::make_unique<VarDeclareAST>(identifier.loc, identifier.text, Type::none, std::move(expr));
 }
 
 std::unique_ptr<StmtAST> Parser::parse_function() {
@@ -260,7 +261,7 @@ std::unique_ptr<StmtAST> Parser::parse_function() {
     // Eat '('
     match_simple(TokenType::OPEN_PARENTHESES, "Expected '(' after function declaration");
 
-    std::vector<VarDeclareAST> parameters;
+    std::vector<ParamDeclareAST> parameters;
     while (current_token().type != TokenType::CLOSE_PARENTHESES) {
         // Get and eat parameter name
         Token parameter = current_token();
@@ -272,13 +273,13 @@ std::unique_ptr<StmtAST> Parser::parse_function() {
         Token type_name = current_token();
         match_simple(TokenType::IDENTIFIER, "Expected type in parameter declaration");
 
-        Type& type = ctx.get_type(type_name.text);
-        if (type.ty == Ty::TINVALID) {
+        Type type = ctx.get_type(type_name.text);
+        if (type.ty == Ty::INVALID) {
             throw push_exception("Type does not exist", type_name);
         }
 
         // No default values FOR NOW
-        parameters.emplace_back(parameter.text, type, nullptr);
+        parameters.emplace_back(parameter.loc, parameter.text, type);
 
         switch (current_token().type) {
             case TokenType::COMMA:
@@ -292,11 +293,23 @@ std::unique_ptr<StmtAST> Parser::parse_function() {
 
     // Eat ')'
     match_simple(TokenType::CLOSE_PARENTHESES, "Expected ')' after parameter list");
+    
+    Type type = Type::void_;
+    if (current_token().type == TokenType::ARROW) {
+        // Eat '->'
+        eat_token();
 
-    return std::make_unique<FunctionAST>(name.text, std::move(parameters), parse_block()); // parse_block() -> body
+        Token type_name = current_token();
+        match_simple(TokenType::IDENTIFIER, "Expected type in function return type declaration");
+        type = ctx.get_type(type_name.text);
+    }
+
+
+    return std::make_unique<FunctionAST>(name.loc, name.text, std::move(parameters), type, parse_block()); // parse_block() -> body
 }
 
 std::unique_ptr<ExprAST> Parser::parse_if_expr() {
+    SourceLocation loc = next_token().loc;
     // Eat 'if'
     eat_token();
 
@@ -309,23 +322,23 @@ std::unique_ptr<ExprAST> Parser::parse_if_expr() {
 
     match_simple(TokenType::CLOSE_PARENTHESES, "Expected ')' after condition expression");
 
-    std::vector<std::unique_ptr<StmtAST>> body = parse_block();
+    std::unique_ptr<BlockAST> body = parse_block();
 
     if (current_token().type != TokenType::ELSE) {
-        std::vector<std::unique_ptr<StmtAST>> else_body{};
-        return std::make_unique<IfExprAST>(std::move(condition), std::move(body), std::move(else_body));
+        return std::make_unique<IfExprAST>(loc, std::move(condition), std::move(body), nullptr);
     }
 
     // Eat 'else'
     eat_token();
 
-    std::vector<std::unique_ptr<StmtAST>> else_body = parse_block();
-    return std::make_unique<IfExprAST>(std::move(condition), std::move(body), std::move(else_body));
+    std::unique_ptr<BlockAST> else_body = parse_block();
+    return std::make_unique<IfExprAST>(loc, std::move(condition), std::move(body), std::move(else_body));
 }
 
 std::unique_ptr<StmtAST> Parser::parse_omg() {
     // Eat '__omg'
     eat_token();
+    Token token = current_token();
 
     std::unique_ptr<ExprAST> expr = parse_expression();
     if (!expr) {
@@ -335,7 +348,7 @@ std::unique_ptr<StmtAST> Parser::parse_omg() {
     // Eat ';'
     match_simple(TokenType::SEMICOLON, "Expected ';' after value");
 
-    return std::make_unique<OmgAST>(std::move(expr));
+    return std::make_unique<OmgAST>(token.loc, std::move(expr));
 }
 
 std::unique_ptr<ExprAST> Parser::parse_expression() {
@@ -359,7 +372,7 @@ std::unique_ptr<StmtAST> Parser::parse_expression_statement(bool require_semicol
         return nullptr;
     }
 
-    return std::make_unique<ExprStmtAST>(std::move(expr));
+    return std::make_unique<ExprStmtAST>(expr->loc, std::move(expr));
 }
 
 std::unique_ptr<StmtAST> Parser::parse_statement() {

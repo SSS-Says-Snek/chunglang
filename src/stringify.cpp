@@ -48,7 +48,8 @@ std::string stringify_symbol(const TokenType& symbol, bool verbose) {
         {TokenType::DOT, {"Dot", "."}},
         {TokenType::COMMA, {"Comma", ","}},
         {TokenType::COLON, {"Colon", ":"}},
-        {TokenType::SEMICOLON, {"Semicolon", ";"}}};
+        {TokenType::SEMICOLON, {"Semicolon", ";"}},
+        {TokenType::ARROW, {"Arrow", "->"}}};
 
     if (verbose) {
         return token_to_string.at(symbol).first;
@@ -120,6 +121,15 @@ std::string ExprAST::stringify(size_t indent_level) {
     return indent(indent_level) + "Goofy expression";
 }
 
+std::string BlockAST::stringify(size_t indent_level) {
+    std::string string;
+    for (auto& statement : body) {
+        string += "\n" + statement->stringify(indent_level);
+    }
+
+    return string;
+}
+
 std::string IfExprAST::stringify(size_t indent_level) {
     std::string indentation = indent(indent_level);
     std::string string{indentation + "If Conditional:"};
@@ -127,15 +137,11 @@ std::string IfExprAST::stringify(size_t indent_level) {
     string += "\n\t" + indentation + "Condition:";
     string += "\n" + condition->stringify(indent_level + 2);
     string += "\n\t" + indentation + "Body:";
-    for (auto& statement : body) {
-        string += "\n" + statement->stringify(indent_level + 2);
-    }
+    string += body->stringify(indent_level + 2); // No '\n', BlockAST::stringify got us covered
 
-    if (!else_body.empty()) {
+    if (!else_body) {
         string += "\n\t" + indentation + "Else Body:";
-        for (auto& statement : else_body) {
-            string += "\n" + statement->stringify(indent_level + 2);
-        }
+        string += else_body->stringify(indent_level + 2);
     }
 
     return string;
@@ -155,11 +161,10 @@ std::string FunctionAST::stringify(size_t indent_level) {
     if (parameters.size() == 0) {
         string += "\n\t\t" + indentation + "No Parameters";
     }
+    string += "\n\t" + indentation + "Type: " + return_type.name;
 
     string += "\n\t" + indentation + "Body:";
-    for (auto& statement : body) {
-        string += "\n" + statement->stringify(indent_level + 2);
-    }
+    string += body->stringify(indent_level + 2);
 
     return string;
 }
@@ -170,6 +175,15 @@ std::string VarDeclareAST::stringify(size_t indent_level) {
 
     string += "\n\t" + indentation + "Name: " + name;
     string += "\n\t" + indentation + "Value:\n" + expr->stringify(indent_level + 2);
+
+    return string;
+}
+
+std::string ParamDeclareAST::stringify(size_t indent_level) {
+    std::string indentation = indent(indent_level);
+    std::string string{indentation + "Variable Declaration:"};
+
+    string += "\n\t" + indentation + "Name: " + name;
 
     return string;
 }
@@ -237,18 +251,19 @@ std::string CallAST::stringify(size_t indent_level) {
 std::string PrimitiveAST::stringify(size_t indent_level) {
     std::string indentation = indent(indent_level);
 
-    switch (value_type) {
-        case ValueType::INT64:
-            return indentation + "Int64: " + std::to_string(int64) + '\n';
-        case ValueType::UINT64:
-            return indentation + "UInt64: " + std::to_string(uint64) + '\n';
-        case ValueType::FLOAT64:
-            return indentation + "Float64: " + std::to_string(float64) + '\n';
-        case ValueType::STRING:
-            return indentation + "String: \"" + string + "\"\n";
-        default:
-            return indentation + "Invalid\n";
-    }
+    // switch (value_type) {
+    //     case ValueType::INT64:
+    //         return indentation + "Int64: " + std::to_string(int64) + '\n';
+    //     case ValueType::UINT64:
+    //         return indentation + "UInt64: " + std::to_string(uint64) + '\n';
+    //     case ValueType::FLOAT64:
+    //         return indentation + "Float64: " + std::to_string(float64) + '\n';
+    //     case ValueType::STRING:
+    //         return indentation + "String: \"" + string + "\"\n";
+    //     default:
+    //         return indentation + "Invalid\n";
+    // }
+    return indentation + "AAAA";
 }
 
 std::string VariableAST::stringify(size_t indent_level) {
