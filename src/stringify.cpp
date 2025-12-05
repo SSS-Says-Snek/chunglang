@@ -161,7 +161,7 @@ std::string FunctionAST::stringify(size_t indent_level) {
     if (parameters.size() == 0) {
         string += "\n\t\t" + indentation + "No Parameters";
     }
-    string += "\n\t" + indentation + "Type: " + return_type.name;
+    string += "\n\t" + indentation + "Return Type: " + return_type.name;
 
     string += "\n\t" + indentation + "Body:";
     string += body->stringify(indent_level + 2);
@@ -263,7 +263,7 @@ std::string PrimitiveAST::stringify(size_t indent_level) {
     //     default:
     //         return indentation + "Invalid\n";
     // }
-    return indentation + "AAAA";
+    return indentation + value + '\n';
 }
 
 std::string VariableAST::stringify(size_t indent_level) {
