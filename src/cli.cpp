@@ -113,7 +113,14 @@ int run_parse(std::vector<std::string>& args) {
         }
 
         Sema sema{std::move(statements)};
-        auto aaaa = sema.resolve();
+        auto resolved_ast = sema.resolve();
+
+        for (auto& resolved_statement : resolved_ast) {
+            llvm::Value* statement_value = resolved_statement->codegen(ctx);
+            if (statement_value) {
+                statement_value->print(llvm::outs());
+            }
+        }
 
         std::cout << "\n\n";
         std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET;

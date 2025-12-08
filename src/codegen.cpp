@@ -7,10 +7,28 @@ llvm::Value* ResolvedVarDeclare::codegen(Context& ctx) {
     return expr->codegen(ctx);
 }
 
+llvm::Value* ResolvedParamDeclare::codegen(Context& ctx) {
+    // Not using for now I think
+    std::cout << "TODOREPLACE but you shouldn't be here.\n";
+    return nullptr;
+}
+
+llvm::Value* ResolvedBlock::codegen(Context& ctx) {
+    for (auto& stmt : body) {
+        stmt->codegen(ctx);
+    }
+    return nullptr;
+}
+
 llvm::Value* ResolvedFunction::codegen(Context& ctx) {
+    if (name == "print") { // Nah no need
+        return nullptr;
+    }
+
     std::vector<llvm::Type*> parameter_types;
+    parameter_types.reserve(parameters.size());
     for (auto& parameter : parameters) {
-        parameter_types.push_back(ctx.llvm_types.at(parameter.type));
+        parameter_types.push_back(ctx.llvm_types.at(parameter->type));
     }
 
     // FOR NOW RET VOID
@@ -24,7 +42,7 @@ llvm::Value* ResolvedFunction::codegen(Context& ctx) {
     // Set parameter names
     size_t i = 0;
     for (auto& function_parameter : function->args()) {
-        auto& parameter_name = parameters[i++].name;
+        auto& parameter_name = parameters[i++]->name;
         function_parameter.setName(parameter_name);
         ctx.named_values[parameter_name] = &function_parameter;
     }
@@ -33,9 +51,7 @@ llvm::Value* ResolvedFunction::codegen(Context& ctx) {
     llvm::BasicBlock* function_block = llvm::BasicBlock::Create(ctx.context, "entry", function);
     ctx.builder.SetInsertPoint(function_block);
 
-    for (auto& stmt : body) {
-        stmt->codegen(ctx);
-    }
+    body->codegen(ctx);
 
     // Void FOR NOW
     ctx.builder.CreateRet(nullptr);
@@ -51,7 +67,7 @@ llvm::Value* ResolvedIfExpr::codegen(Context& ctx) {
     llvm::BasicBlock* cont_block = llvm::BasicBlock::Create(ctx.context, "if.cont"); // Exits the if
 
     llvm::BasicBlock* else_block = cont_block;
-    if (!else_body.empty()) {
+    if (!else_body) {
         else_block = llvm::BasicBlock::Create(ctx.context, "if.else");
     }
 
@@ -64,17 +80,13 @@ llvm::Value* ResolvedIfExpr::codegen(Context& ctx) {
 
     if_block->insertInto(current_function);
     ctx.builder.SetInsertPoint(if_block);
-    for (auto& stmt : body) {
-        stmt->codegen(ctx);
-    }
+    body->codegen(ctx);
     ctx.builder.CreateBr(cont_block);
 
-    if (!else_body.empty()) {
+    if (!else_body) {
         else_block->insertInto(current_function);
         ctx.builder.SetInsertPoint(else_block);
-        for (auto& stmt : else_body) {
-            stmt->codegen(ctx);
-        }
+        else_body->codegen(ctx);
         ctx.builder.CreateBr(cont_block);
     }
 
@@ -121,9 +133,9 @@ llvm::Value* ResolvedBinaryExpr::codegen(Context& ctx) {
 }
 
 llvm::Value* ResolvedCall::codegen(Context& ctx) {
-    llvm::Function* function = ctx.module->getFunction(callee);
+    llvm::Function* function = ctx.module->getFunction(callee->name);
     if (!function) {
-        std::cout << "No function named '" + callee + "'\n";
+        std::cout << "No function named '" + callee->name + "'\n";
         return nullptr;
     }
 
@@ -131,15 +143,16 @@ llvm::Value* ResolvedCall::codegen(Context& ctx) {
     if (expected_num_args != arguments.size()) {
         // "Expected x argument(s) in call to function sussy, got y"
         std::cout << "Expected " + std::to_string(expected_num_args) + " argument" +
-                         (expected_num_args != 1 ? "s " : " ") + "in call to function '" + callee + "', got " +
+                         (expected_num_args != 1 ? "s " : " ") + "in call to function '" + callee->name + "', got " +
                          std::to_string(arguments.size())
                   << '\n';
         return nullptr;
     }
 
     std::vector<llvm::Value*> argument_values;
-    for (auto& arg : arguments) {
-        argument_values.push_back(arg->codegen(ctx));
+    for (auto&& arg : arguments) {
+        llvm::Value* value = arg->codegen(ctx);
+        argument_values.emplace_back(value);
         if (!argument_values.back()) {
             return nullptr;
         }
@@ -166,9 +179,9 @@ llvm::Value* ResolvedPrimitive::codegen(Context& ctx) {
 }
 
 llvm::Value* ResolvedVariable::codegen(Context& ctx) {
-    llvm::Value* value = ctx.named_values[name];
+    llvm::Value* value = ctx.named_values[declaration->name];
     if (!value) {
-        std::cout << "Unknown variable \"" + name + "\"";
+        std::cout << "Unknown variable \"" + declaration->name + "\"";
         return nullptr;
     }
     return value;

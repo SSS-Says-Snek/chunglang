@@ -179,7 +179,7 @@ std::unique_ptr<ExprAST> Parser::parse_bin_op(int min_op_precedence, std::unique
 std::unique_ptr<ExprAST> Parser::parse_primitive() {
     Token token = eat_token();
 
-    return std::make_unique<PrimitiveAST>(token.loc, token.text);
+    return std::make_unique<PrimitiveAST>(token.loc, token.type, token.text);
 }
 
 std::unique_ptr<ExprAST> Parser::parse_primary() {
@@ -233,7 +233,7 @@ std::unique_ptr<StmtAST> Parser::parse_var_declaration() {
     }
     eat_token();
 
-    std::unique_ptr<ExprAST> expr = std::make_unique<PrimitiveAST>(identifier.loc); // OK I'm not sure if this token should be used for SourceLocation
+    std::unique_ptr<ExprAST> expr = std::make_unique<PrimitiveAST>(identifier.loc, TokenType::INVALID); // OK I'm not sure if this token should be used for SourceLocation
     if (current_token().type == TokenType::ASSIGN) {
         // Eat '='
         eat_token();

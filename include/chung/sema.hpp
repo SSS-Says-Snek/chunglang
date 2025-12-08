@@ -1,3 +1,5 @@
+#pragma once
+
 #include <memory>
 #include <optional>
 #include <vector>
@@ -28,6 +30,10 @@ public:
     std::unique_ptr<ResolvedExpr> resolve_expr(const ExprAST& expr);
     std::unique_ptr<ResolvedExpr> resolve_expr_stmt(const ExprStmtAST& expr_stmt);
     std::unique_ptr<ResolvedOmg> resolve_omg(const OmgAST& block);
+    std::unique_ptr<ResolvedIfExpr> resolve_if_expr(const IfExprAST& if_expr);
+    std::unique_ptr<ResolvedBinaryExpr> resolve_binary_expr(const BinaryExprAST& binary_expr);
+    std::unique_ptr<ResolvedPrimitive> resolve_primitive(const PrimitiveAST& primitive);
+    std::unique_ptr<ResolvedVariable> resolve_variable(const VariableAST& variable);
     static std::optional<Type> resolve_type(Type parsed_type);
 
     std::pair<ResolvedDecl*, int> lookup_declaration(const std::string& name);

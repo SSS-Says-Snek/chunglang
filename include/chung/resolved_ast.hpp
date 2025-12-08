@@ -1,3 +1,5 @@
+#pragma once
+
 #include "chung/context.hpp"
 #include "chung/token.hpp"
 #include <llvm/IR/Value.h>
@@ -9,7 +11,7 @@ class ResolvedAST {
 public:
     virtual ~ResolvedAST() = default;
     // virtual std::string stringify(size_t indent_level = 0) = 0;
-    // virtual llvm::Value* codegen(Context& ctx) = 0;
+    virtual llvm::Value* codegen(Context& ctx) = 0;
 };
 
 class ResolvedStmt : public ResolvedAST {
@@ -20,7 +22,7 @@ public:
     }
 
     // std::string stringify(size_t indent_level = 0) override = 0;
-    // llvm::Value* codegen(Context& ctx) override = 0;
+    llvm::Value* codegen(Context& ctx) override = 0;
 };
 
 class ResolvedExpr : public ResolvedAST {
@@ -33,7 +35,7 @@ public:
     }
 
     // std::string stringify(size_t indent_level = 0) override = 0;
-    // llvm::Value* codegen(Context& ctx) override = 0;
+    llvm::Value* codegen(Context& ctx) override = 0;
 };
 
 class ResolvedBlock : public ResolvedStmt {
@@ -45,58 +47,55 @@ public:
     }
 
     // std::string stringify(size_t indent_level = 0) override;
+    llvm::Value* codegen(Context& ctx) override;
 };
 
 class ResolvedDecl : public ResolvedStmt {
 public:
     std::string name;
+    Type type;
 
-    ResolvedDecl(SourceLocation loc, std::string name) : ResolvedStmt(loc), name{std::move(name)} {
+    ResolvedDecl(SourceLocation loc, std::string name, Type type) : ResolvedStmt(loc), name{std::move(name)}, type{std::move(type)} {
     }
 
     // std::string stringify(size_t indent_level = 0) override = 0;
-    // llvm::Value* codegen(Context& ctx) override = 0;
+    llvm::Value* codegen(Context& ctx) override = 0;
 };
 
 class ResolvedVarDeclare : public ResolvedDecl {
 public:
-    Type type;
     std::unique_ptr<ResolvedExpr> expr;
 
     ResolvedVarDeclare(SourceLocation loc, std::string name, Type type, std::unique_ptr<ResolvedExpr> expr)
-        : ResolvedDecl(loc, std::move(name)), type{std::move(type)}, expr{std::move(expr)} {
+        : ResolvedDecl(loc, std::move(name), std::move(type)), expr{std::move(expr)} {
     }
 
     // std::string stringify(size_t indent_level = 0) override;
-    // llvm::Value* codegen(Context& ctx) override;
+    llvm::Value* codegen(Context& ctx) override;
 };
 
 class ResolvedParamDeclare : public ResolvedDecl {
 public:
-    Type type;
-
     ResolvedParamDeclare(SourceLocation loc, std::string name, Type type)
-        : ResolvedDecl(loc, std::move(name)), type{std::move(type)} {
+        : ResolvedDecl(loc, std::move(name), std::move(type)) {
     }
 
     // std::string stringify(size_t indent_level = 0) override;
-    // llvm::Value* codegen(Context& ctx) override;
+    llvm::Value* codegen(Context& ctx) override;
 };
 
 class ResolvedFunction : public ResolvedDecl {
 public:
     std::vector<std::unique_ptr<ResolvedParamDeclare>> parameters;
-    Type return_type;
     std::unique_ptr<ResolvedBlock> body;
-
 
     ResolvedFunction(SourceLocation loc, std::string name, std::vector<std::unique_ptr<ResolvedParamDeclare>> parameters, Type return_type,
                      std::unique_ptr<ResolvedBlock> body)
-        : ResolvedDecl(loc, std::move(name)), parameters{std::move(parameters)}, return_type{std::move(return_type)}, body{std::move(body)} {
+        : ResolvedDecl(loc, std::move(name), std::move(return_type)), parameters{std::move(parameters)}, body{std::move(body)} {
     }
 
     // std::string stringify(size_t indent_level = 0) override;
-    // llvm::Value* codegen(Context& ctx) override;
+    llvm::Value* codegen(Context& ctx) override;
 };
 
 class ResolvedOmg : public ResolvedStmt {
@@ -107,7 +106,7 @@ public:
     }
 
     // std::string stringify(size_t indent_level = 0) override;
-    // llvm::Value* codegen(Context& ctx) override;
+    llvm::Value* codegen(Context& ctx) override;
 };
 
 class ResolvedExprStmt : public ResolvedStmt {
@@ -119,7 +118,7 @@ public:
     }
 
     // std::string stringify(size_t indent_level = 0) override;
-    // llvm::Value* codegen(Context& ctx) override;
+    llvm::Value* codegen(Context& ctx) override;
 };
 
 class ResolvedBinaryExpr : public ResolvedExpr {
@@ -134,21 +133,21 @@ public:
     }
 
     // std::string stringify(size_t indent_level) override;
-    // llvm::Value* codegen(Context& ctx) override;
+    llvm::Value* codegen(Context& ctx) override;
 };
 
 class ResolvedCall : public ResolvedExpr {
 public:
-    std::unique_ptr<ResolvedFunction> callee;
+    const ResolvedFunction* callee;
     std::vector<std::unique_ptr<ResolvedExpr>> arguments;
 
-    ResolvedCall(SourceLocation loc, std::unique_ptr<ResolvedFunction> callee,
+    ResolvedCall(SourceLocation loc, const ResolvedFunction& callee,
                  std::vector<std::unique_ptr<ResolvedExpr>> arguments)
-        : ResolvedExpr(loc, callee->return_type), callee{std::move(callee)}, arguments{std::move(arguments)} {
+        : ResolvedExpr(loc, callee.type), callee{&callee}, arguments{std::move(arguments)} {
     }
 
     // std::string stringify(size_t indent_level) override;
-    // llvm::Value* codegen(Context& ctx) override;
+    llvm::Value* codegen(Context& ctx) override;
 };
 
 class ResolvedIfExpr : public ResolvedExpr {
@@ -165,7 +164,7 @@ public:
     }
 
     // std::string stringify(size_t indent_level) override;
-    // llvm::Value* codegen(Context& ctx) override;
+    llvm::Value* codegen(Context& ctx) override;
 };
 
 class ResolvedPrimitive : public ResolvedExpr {
@@ -195,17 +194,17 @@ public:
     }
 
     // std::string stringify(size_t indent_level = 0) override;
-    // llvm::Value* codegen(Context& ctx) override;
+    llvm::Value* codegen(Context& ctx) override;
 };
 
 class ResolvedVariable : public ResolvedExpr {
 public:
-    std::unique_ptr<ResolvedVarDeclare> declaration;
+    ResolvedDecl* declaration;
 
-    ResolvedVariable(SourceLocation loc, std::unique_ptr<ResolvedVarDeclare> declaration)
-        : ResolvedExpr(loc, declaration->type) {
+    ResolvedVariable(SourceLocation loc, ResolvedDecl* declaration)
+        : ResolvedExpr(loc, declaration->type), declaration{declaration} {
     }
 
     // std::string stringify(size_t indent_level = 0) override;
-    // llvm::Value* codegen(Context& ctx) override;
+    llvm::Value* codegen(Context& ctx) override;
 };

@@ -161,7 +161,7 @@ std::string FunctionAST::stringify(size_t indent_level) {
     if (parameters.size() == 0) {
         string += "\n\t\t" + indentation + "No Parameters";
     }
-    string += "\n\t" + indentation + "Return Type: " + return_type.name;
+    string += "\n\t" + indentation + "Return Type: " + type.name;
 
     string += "\n\t" + indentation + "Body:";
     string += body->stringify(indent_level + 2);

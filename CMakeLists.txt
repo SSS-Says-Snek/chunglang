@@ -27,7 +27,7 @@ add_definitions(${LLVM_DEFINITIONS_LIST})
 add_executable(chung
     src/cli.cpp
     src/library/setup_prelude.cpp
-    # src/codegen.cpp
+    src/codegen.cpp
     src/context.cpp
     src/file.cpp
     src/lexer.cpp
