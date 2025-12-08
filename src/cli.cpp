@@ -97,16 +97,12 @@ int run_parse(std::vector<std::string>& args) {
         std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET;
         std::cout << ANSI_BOLD << "                 Program AST                  \n" << ANSI_RESET;
         std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET << '\n';
-        std::cout << ANSI_CYAN << "Number of statements: " << statements.size() << ANSI_RESET << '\n';
+        std::cout << ANSI_CYAN << "Number of statements: " << statements.size() << ANSI_RESET;
 
         for (auto& statement : statements) {
-            std::cout << statement->stringify() << '\n';
-
-            // llvm::Value* statement_value = statement->codegen(ctx);
-            // if (statement_value) {
-            //     statement_value->print(llvm::outs());
-            // }
+            std::cout << "\n│" + statement->stringify();
         }
+        std::cout << '\n';
 
         if (!parse_exceptions.empty()) {
             return 1;

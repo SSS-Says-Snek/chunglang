@@ -4,6 +4,7 @@ func stuff(param: int64) {
 
 func aa(param: int64) {
     print(param + 3);
+    print(sigma);
 }
 
 func main() {

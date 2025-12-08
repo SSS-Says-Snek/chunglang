@@ -212,11 +212,18 @@ std::unique_ptr<BlockAST> Parser::parse_block() {
 
         // std::cout << "OOW" << stringify(current_token());
         statements.push_back(parse_statement());
+        // switch (current_token().type) {
+        //     case TokenType::LET:
+        //         statements.push_back(parse_statement());
+        //         break;
+        //     default:
+        //         auto expr = parse_expression();
+        //         statements.push_back(std::make_unique<ExprStmtAST>(expr->loc, std::move(expr)));
+        // }
         // std::cout << "WOW" << stringify(current_token());
     }
 
     // Eat '}'
-    // std::cout << 'O' << stringify(eat_token());
     eat_token();
 
     return std::make_unique<BlockAST>(loc, std::move(statements));
