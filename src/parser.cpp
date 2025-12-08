@@ -34,8 +34,8 @@ ParseException::ParseException(std::string exception_message, Token token, std::
 
 std::string ParseException::write(const std::vector<std::string>& source_lines) {
     std::string string{ANSI_RED};
-    string += "ParseException at line " + std::to_string(token.loc.line) + " column " + std::to_string(token.loc.column) +
-              ":\n" + ANSI_RESET;
+    string += "ParseException at line " + std::to_string(token.loc.line) + " column " +
+              std::to_string(token.loc.column) + ":\n" + ANSI_RESET;
     std::string carets;
 
     for (size_t i = 0; i <= source_line.length(); i++) {
@@ -233,7 +233,8 @@ std::unique_ptr<StmtAST> Parser::parse_var_declaration() {
     }
     eat_token();
 
-    std::unique_ptr<ExprAST> expr = std::make_unique<PrimitiveAST>(identifier.loc, TokenType::INVALID); // OK I'm not sure if this token should be used for SourceLocation
+    std::unique_ptr<ExprAST> expr = std::make_unique<PrimitiveAST>(
+        identifier.loc, TokenType::INVALID); // OK I'm not sure if this token should be used for SourceLocation
     if (current_token().type == TokenType::ASSIGN) {
         // Eat '='
         eat_token();
@@ -293,7 +294,7 @@ std::unique_ptr<StmtAST> Parser::parse_function() {
 
     // Eat ')'
     match_simple(TokenType::CLOSE_PARENTHESES, "Expected ')' after parameter list");
-    
+
     Type type = Type::void_;
     if (current_token().type == TokenType::ARROW) {
         // Eat '->'
@@ -304,8 +305,8 @@ std::unique_ptr<StmtAST> Parser::parse_function() {
         type = ctx.get_type(type_name.text);
     }
 
-
-    return std::make_unique<FunctionAST>(name.loc, name.text, std::move(parameters), type, parse_block()); // parse_block() -> body
+    return std::make_unique<FunctionAST>(name.loc, name.text, std::move(parameters), type,
+                                         parse_block()); // parse_block() -> body
 }
 
 std::unique_ptr<ExprAST> Parser::parse_if_expr() {

@@ -241,20 +241,20 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                         }
                         break;
 
-                    HANDLE_SIMPLE(TokenType::ADD, '+')
-                    HANDLE_SIMPLE(TokenType::MUL, '*')
+                        HANDLE_SIMPLE(TokenType::ADD, '+')
+                        HANDLE_SIMPLE(TokenType::MUL, '*')
 
-                    HANDLE_SIMPLE(TokenType::OPEN_PARENTHESES, '(')
-                    HANDLE_SIMPLE(TokenType::CLOSE_PARENTHESES, ')')
-                    HANDLE_SIMPLE(TokenType::OPEN_BRACKETS, '[')
-                    HANDLE_SIMPLE(TokenType::CLOSE_BRACKETS, ']')
-                    HANDLE_SIMPLE(TokenType::OPEN_BRACES, '{')
-                    HANDLE_SIMPLE(TokenType::CLOSE_BRACES, '}')
+                        HANDLE_SIMPLE(TokenType::OPEN_PARENTHESES, '(')
+                        HANDLE_SIMPLE(TokenType::CLOSE_PARENTHESES, ')')
+                        HANDLE_SIMPLE(TokenType::OPEN_BRACKETS, '[')
+                        HANDLE_SIMPLE(TokenType::CLOSE_BRACKETS, ']')
+                        HANDLE_SIMPLE(TokenType::OPEN_BRACES, '{')
+                        HANDLE_SIMPLE(TokenType::CLOSE_BRACES, '}')
 
-                    HANDLE_SIMPLE(TokenType::DOT, '.')
-                    HANDLE_SIMPLE(TokenType::COMMA, ',')
-                    HANDLE_SIMPLE(TokenType::COLON, ':')
-                    HANDLE_SIMPLE(TokenType::SEMICOLON, ';')
+                        HANDLE_SIMPLE(TokenType::DOT, '.')
+                        HANDLE_SIMPLE(TokenType::COMMA, ',')
+                        HANDLE_SIMPLE(TokenType::COLON, ':')
+                        HANDLE_SIMPLE(TokenType::SEMICOLON, ';')
 
                     default:
                         tokens.push_back(make_token(TokenType::INVALID, cursor, cursor + 1));

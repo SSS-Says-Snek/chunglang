@@ -59,7 +59,7 @@ std::string stringify_symbol(const TokenType& symbol, bool verbose) {
 
 std::string stringify_keyword(const TokenType& keyword) {
     static const std::map<TokenType, std::string> token_to_string = {
-        {TokenType::FUNC, "Func"},   {TokenType::LET, "Let"},     {TokenType::IF, "If"},
+        {TokenType::FUNC, "Func"}, {TokenType::LET, "Let"},     {TokenType::IF, "If"},
         {TokenType::ELSE, "Else"}, {TokenType::__OMG, "__OMG"},
     };
     return token_to_string.at(keyword);
