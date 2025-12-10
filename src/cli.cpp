@@ -113,15 +113,12 @@ int run_parse(std::vector<std::string>& args) {
 
         for (auto& resolved_statement : resolved_ast) {
             llvm::Value* statement_value = resolved_statement->codegen(ctx);
-            if (statement_value) {
-                statement_value->print(llvm::outs());
-            }
         }
 
         std::cout << "\n\n";
         std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET;
         std::cout << ANSI_BOLD << "      Module IR (temporary trust me bro)      \n" << ANSI_RESET;
-        std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET << std::endl;
+        std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET << '\n';
         ctx.module->print(llvm::outs(), nullptr);
 
         std::cout << "\nCompiling " << file_path << '\n';

@@ -132,6 +132,9 @@ std::string BlockAST::stringify(size_t indent_level) {
     for (auto& statement : body) {
         string += statement->stringify(indent_level);
     }
+    if (return_value) {
+        string += return_value->stringify(indent_level);
+    }
 
     return string;
 }

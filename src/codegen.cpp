@@ -1,13 +1,14 @@
 #include "chung/resolved_ast.hpp"
 #include <iostream>
 #include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/Constants.h>
 
 llvm::Value* ResolvedVarDeclare::codegen(Context& ctx) {
     // For now
     return expr->codegen(ctx);
 }
 
-llvm::Value* ResolvedParamDeclare::codegen(Context& ctx) {
+llvm::Value* ResolvedParamDeclare::codegen(Context&  /*ctx*/) {
     // Not using for now I think
     std::cout << "TODOREPLACE but you shouldn't be here.\n";
     return nullptr;
@@ -16,6 +17,10 @@ llvm::Value* ResolvedParamDeclare::codegen(Context& ctx) {
 llvm::Value* ResolvedBlock::codegen(Context& ctx) {
     for (auto& stmt : body) {
         stmt->codegen(ctx);
+    }
+
+    if (return_value) {
+        return_value->codegen(ctx);
     }
     return nullptr;
 }
@@ -67,14 +72,14 @@ llvm::Value* ResolvedIfExpr::codegen(Context& ctx) {
     llvm::BasicBlock* cont_block = llvm::BasicBlock::Create(ctx.context, "if.cont"); // Exits the if
 
     llvm::BasicBlock* else_block = cont_block;
-    if (!else_body) {
+    if (else_body) {
         else_block = llvm::BasicBlock::Create(ctx.context, "if.else");
     }
 
     llvm::Value* condition_code = condition->codegen(ctx);
 
     llvm::Value* boolean =
-        ctx.builder.CreateICmpNE(condition_code, llvm::ConstantInt::get(ctx.context, llvm::APInt{64, 0, true}));
+        ctx.builder.CreateICmpNE(condition_code, llvm::ConstantInt::get(ctx.context, llvm::APInt{1, 0, true}));
 
     ctx.builder.CreateCondBr(boolean, if_block, else_block);
 
@@ -83,7 +88,7 @@ llvm::Value* ResolvedIfExpr::codegen(Context& ctx) {
     body->codegen(ctx);
     ctx.builder.CreateBr(cont_block);
 
-    if (!else_body) {
+    if (else_body) {
         else_block->insertInto(current_function);
         ctx.builder.SetInsertPoint(else_block);
         else_body->codegen(ctx);
@@ -95,7 +100,7 @@ llvm::Value* ResolvedIfExpr::codegen(Context& ctx) {
     return nullptr;
 }
 
-llvm::Value* ResolvedOmg::codegen(Context& ctx) {
+llvm::Value* ResolvedOmg::codegen(Context&  /*ctx*/) {
     std::cerr << "NOT IMPLEMENTED yet (OmgAST)\n";
     return nullptr;
 }
@@ -114,16 +119,12 @@ llvm::Value* ResolvedBinaryExpr::codegen(Context& ctx) {
     switch (op) {
         // TODO: Add type system (wow)
         case TokenType::ADD:
-            lhs_code->getType()->print(llvm::outs());
             return ctx.builder.CreateAdd(lhs_code, rhs_code);
         case TokenType::SUB:
-            lhs_code->getType()->print(llvm::outs());
             return ctx.builder.CreateSub(lhs_code, rhs_code);
         case TokenType::MUL:
-            lhs_code->getType()->print(llvm::outs());
             return ctx.builder.CreateMul(lhs_code, rhs_code);
         case TokenType::GREATER_THAN:
-            lhs_code->getType()->print(llvm::outs());
             return ctx.builder.CreateICmpSGT(
                 lhs_code, rhs_code); // TODO: ICmpSGT Is only for I-nteger Cmp-arison with S-igned G-reater T-han
         default:
@@ -181,7 +182,7 @@ llvm::Value* ResolvedPrimitive::codegen(Context& ctx) {
 llvm::Value* ResolvedVariable::codegen(Context& ctx) {
     llvm::Value* value = ctx.named_values[declaration->name];
     if (!value) {
-        std::cout << "Unknown variable \"" + declaration->name + "\"";
+        std::cout << "Unknown variable \"" + declaration->name + "\"" + '\n';
         return nullptr;
     }
     return value;

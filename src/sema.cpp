@@ -1,10 +1,57 @@
+#include "chung/resolved_ast.hpp"
 #include "chung/ast.hpp"
 #include "chung/token.hpp"
 #include "chung/type.hpp"
+#include "chung/utils/ansi.hpp"
 #include "chung/sema.hpp"
 #include <llvm/Support/ErrorHandling.h>
-#include <memory>
 #include <iostream>
+#include <memory>
+
+#define HANDLE_MAKE_VAR(identifier, initialization)                                                                    \
+    auto identifier = (initialization);                                                                                \
+    if (!identifier) return nullptr;
+
+SemaException::SemaException(std::string exception_message, Token token, const std::string& source_line)
+    : exception_message{std::move(exception_message)}, token{std::move(token)}, source_line{source_line} {
+}
+
+std::string SemaException::write(const std::vector<std::string>& source_lines) {
+    std::string string{ANSI_RED};
+    string += "SemaException at line " + std::to_string(token.loc.line) + " column " +
+              std::to_string(token.loc.column) + ":\n" + ANSI_RESET;
+    std::string carets;
+
+    for (size_t i = 0; i <= source_line.length(); i++) {
+        if (i == token.loc.column) {
+            carets += ANSI_RED;
+        }
+        if (i == token.loc.column + token.loc.token_length) {
+            carets += ANSI_RESET;
+        }
+
+        if (token.loc.column <= i && i < token.loc.column + token.loc.token_length) {
+            carets += '^';
+        } else {
+            carets += '~';
+        }
+    }
+
+    if (token.loc.line > 0) {
+        string += "|\t" + source_lines[token.loc.line - 1 - 1] + '\n';
+    }
+
+    string += "|\t";
+    string += std::string{ANSI_RED} + source_line + ANSI_RESET + '\n';
+    string += "|\t" + carets + '\n';
+
+    if (token.loc.line < source_lines.size()) {
+        string += "|\t" + source_lines[token.loc.line] + '\n';
+    }
+    string += ANSI_RED + exception_message + ANSI_RESET + '\n';
+
+    return string;
+}
 
 std::pair<ResolvedDecl*, int> Sema::lookup_declaration(const std::string& name) {
     // 0 is innermost, more positive = more outer
@@ -85,14 +132,31 @@ std::unique_ptr<ResolvedExpr> Sema::resolve_expr(const ExprAST& expr) {
 }
 
 std::unique_ptr<ResolvedIfExpr> Sema::resolve_if_expr(const IfExprAST& if_expr) {
+    HANDLE_MAKE_VAR(condition, resolve_expr(*if_expr.condition))
+    // TODO: Check if condition expr is actually comparable and evaluates
+
+    HANDLE_MAKE_VAR(resolved_body, resolve_block(*if_expr.body))
+
+    std::unique_ptr<ResolvedBlock> resolved_else_body;
+    if (if_expr.else_body) {
+        resolved_else_body = resolve_block(*if_expr.else_body);
+        if (!resolved_else_body) {
+            return nullptr;
+        }
+
+        // TODO: Better type checking here
+        if (resolved_body->type != resolved_else_body->type) {
+            std::cout << "TODOREPLACE but mismatched types between true and false bodies\n";
+        }
+    }
+
+    return std::make_unique<ResolvedIfExpr>(if_expr.loc, std::move(resolved_body->type), std::move(condition), std::move(resolved_body),
+                                            std::move(resolved_else_body));
 }
 
 std::unique_ptr<ResolvedBinaryExpr> Sema::resolve_binary_expr(const BinaryExprAST& binary_expr) {
-    std::unique_ptr<ResolvedExpr> resolved_lhs = resolve_expr(*binary_expr.lhs);
-    std::unique_ptr<ResolvedExpr> resolved_rhs = resolve_expr(*binary_expr.rhs);
-    if (!resolved_lhs || !resolved_rhs) {
-        return nullptr;
-    }
+    HANDLE_MAKE_VAR(resolved_lhs, resolve_expr(*binary_expr.lhs))
+    HANDLE_MAKE_VAR(resolved_rhs, resolve_expr(*binary_expr.rhs))
 
     if (resolved_lhs->type.ty != resolved_rhs->type.ty) { // TODO: operator up/down, struct, operator overloading?
         std::cout << "TODOREPLACE but binary expression contains two different types\n";
@@ -164,9 +228,9 @@ std::unique_ptr<ResolvedFunction> Sema::resolve_function(const FunctionAST& func
     std::vector<std::unique_ptr<ResolvedParamDeclare>> resolved_params;
 
     for (auto&& param : function.parameters) {
-        std::unique_ptr<ResolvedParamDeclare> resolved_param = resolve_param_decl(param);
+        HANDLE_MAKE_VAR(resolved_param, resolve_param_decl(param))
 
-        if (!resolved_param || !add_declaration(*resolved_param)) {
+        if (!add_declaration(*resolved_param)) {
             return nullptr;
         }
         resolved_params.push_back(std::move(resolved_param));
@@ -204,10 +268,7 @@ std::unique_ptr<ResolvedCall> Sema::resolve_call(const CallAST& call) {
     for (size_t i = 0; i < call.arguments.size(); i++) {
         const auto& argument = call.arguments[i];
 
-        std::unique_ptr<ResolvedExpr> resolved_expr = resolve_expr(*argument);
-        if (!resolved_expr) {
-            return nullptr;
-        }
+        HANDLE_MAKE_VAR(resolved_expr, resolve_expr(*argument))
         if (resolved_expr->type.ty != resolved_function->parameters[i]->type.ty) {
             std::cout << "TODOREPLACE but argument type is mismatching with parameter type\n";
             return nullptr;
@@ -236,7 +297,12 @@ std::unique_ptr<ResolvedBlock> Sema::resolve_block(const BlockAST& block) {
         return nullptr;
     }
 
-    return std::make_unique<ResolvedBlock>(block.loc, std::move(resolved_statements));
+    std::unique_ptr<ResolvedExpr> resolved_return_type;
+    if (block.return_value) {
+        resolved_return_type = resolve_expr(*block.return_value);
+    }
+
+    return std::make_unique<ResolvedBlock>(block.loc, std::move(resolved_statements), std::move(resolved_return_type));
 }
 
 std::optional<Type> Sema::resolve_type(Type parsed_type) {
@@ -252,7 +318,7 @@ std::unique_ptr<ResolvedFunction> generate_print() {
     auto n = std::make_unique<ResolvedParamDeclare>(print_loc, "n", Type::int64);
     params.push_back(std::move(n));
 
-    auto block = std::make_unique<ResolvedBlock>(print_loc, std::vector<std::unique_ptr<ResolvedStmt>>());
+    auto block = std::make_unique<ResolvedBlock>(print_loc, std::vector<std::unique_ptr<ResolvedStmt>>(), nullptr);
     return std::make_unique<ResolvedFunction>(print_loc, "print", std::move(params), Type::void_, std::move(block));
 }
 
@@ -306,11 +372,15 @@ std::vector<std::unique_ptr<ResolvedStmt>> Sema::resolve() {
                 add_declaration(*param);
             }
 
-            auto resolved_body = resolve_block(
+            auto resolved_body = resolve_block( // ast[i - 1] because the first resolved_ast is `print`
                 *dynamic_cast<FunctionAST*>(ast[i - 1].get())->body); // This is the worst thing I've ever written
             if (!resolved_body) {
                 error = true;
                 continue;
+            }
+
+            if (resolved_body->return_value && resolved_body->return_value->type != function->type) {
+                std::cout << "TODOREPLACE but body return type does not match function return type\n";
             }
 
             current_function->body = std::move(resolved_body);

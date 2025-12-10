@@ -38,12 +38,14 @@ public:
     llvm::Value* codegen(Context& ctx) override = 0;
 };
 
-class ResolvedBlock : public ResolvedStmt {
+class ResolvedBlock : public ResolvedExpr {
 public:
     std::vector<std::unique_ptr<ResolvedStmt>> body;
+    std::unique_ptr<ResolvedExpr> return_value;
 
-    ResolvedBlock(SourceLocation loc, std::vector<std::unique_ptr<ResolvedStmt>> body)
-        : ResolvedStmt(loc), body{std::move(body)} {
+    ResolvedBlock(SourceLocation loc, std::vector<std::unique_ptr<ResolvedStmt>> body,
+                  std::unique_ptr<ResolvedExpr> return_value)
+        : ResolvedExpr(loc, return_value ? return_value->type : Type::void_), body{std::move(body)}, return_value{std::move(return_value)} {
     }
 
     // std::string stringify(size_t indent_level = 0) override;
@@ -55,7 +57,8 @@ public:
     std::string name;
     Type type;
 
-    ResolvedDecl(SourceLocation loc, std::string name, Type type) : ResolvedStmt(loc), name{std::move(name)}, type{std::move(type)} {
+    ResolvedDecl(SourceLocation loc, std::string name, Type type)
+        : ResolvedStmt(loc), name{std::move(name)}, type{std::move(type)} {
     }
 
     // std::string stringify(size_t indent_level = 0) override = 0;
@@ -89,9 +92,11 @@ public:
     std::vector<std::unique_ptr<ResolvedParamDeclare>> parameters;
     std::unique_ptr<ResolvedBlock> body;
 
-    ResolvedFunction(SourceLocation loc, std::string name, std::vector<std::unique_ptr<ResolvedParamDeclare>> parameters, Type return_type,
+    ResolvedFunction(SourceLocation loc, std::string name,
+                     std::vector<std::unique_ptr<ResolvedParamDeclare>> parameters, Type return_type,
                      std::unique_ptr<ResolvedBlock> body)
-        : ResolvedDecl(loc, std::move(name), std::move(return_type)), parameters{std::move(parameters)}, body{std::move(body)} {
+        : ResolvedDecl(loc, std::move(name), std::move(return_type)), parameters{std::move(parameters)},
+          body{std::move(body)} {
     }
 
     // std::string stringify(size_t indent_level = 0) override;
@@ -156,10 +161,9 @@ public:
     std::unique_ptr<ResolvedBlock> body;
     std::unique_ptr<ResolvedBlock> else_body;
 
-    ResolvedIfExpr(SourceLocation loc, std::unique_ptr<ResolvedExpr> condition,
-                   std::unique_ptr<ResolvedBlock> body,
+    ResolvedIfExpr(SourceLocation loc, Type type, std::unique_ptr<ResolvedExpr> condition, std::unique_ptr<ResolvedBlock> body,
                    std::unique_ptr<ResolvedBlock> else_body)
-        : ResolvedExpr(loc, Type::none), condition{std::move(condition)}, body{std::move(body)},
+        : ResolvedExpr(loc, std::move(type)), condition{std::move(condition)}, body{std::move(body)}, // Sema will fill in type
           else_body{std::move(else_body)} { // Too lazy for type; TODO
     }
 

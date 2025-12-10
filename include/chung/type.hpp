@@ -43,4 +43,12 @@ public:
     bool operator<(const Type& other) const {
         return ty < other.ty;
     }
+
+    bool operator==(const Type& other) const {
+        return ty == other.ty && name == other.name;
+    }
+
+    bool operator!=(const Type& other) const {
+        return ty != other.ty || name != other.name;
+    }
 };

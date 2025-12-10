@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 #include <unordered_map>
@@ -28,8 +29,8 @@ int get_op_precedence(TokenType op) {
     return result->second;
 }
 
-ParseException::ParseException(std::string exception_message, Token token, std::string source_line)
-    : exception_message{std::move(exception_message)}, token{std::move(token)}, source_line{std::move(source_line)} {
+ParseException::ParseException(std::string exception_message, Token token, const std::string& source_line)
+    : exception_message{std::move(exception_message)}, token{std::move(token)}, source_line{source_line} {
 }
 
 std::string ParseException::write(const std::vector<std::string>& source_lines) {
@@ -205,28 +206,44 @@ std::unique_ptr<BlockAST> Parser::parse_block() {
     match_simple(TokenType::OPEN_BRACES, "Expected '{' at start of block");
 
     std::vector<std::unique_ptr<StmtAST>> statements;
+    std::unique_ptr<ExprAST> return_value;
     while (current_token().type != TokenType::CLOSE_BRACES) {
         if (current_token().type == TokenType::EOF) {
             throw push_exception("Expected '}', got EOF. You probably forgot to close the block", current_token());
         }
 
-        // std::cout << "OOW" << stringify(current_token());
-        statements.push_back(parse_statement());
-        // switch (current_token().type) {
-        //     case TokenType::LET:
-        //         statements.push_back(parse_statement());
-        //         break;
-        //     default:
-        //         auto expr = parse_expression();
-        //         statements.push_back(std::make_unique<ExprStmtAST>(expr->loc, std::move(expr)));
-        // }
-        // std::cout << "WOW" << stringify(current_token());
+        switch (current_token().type) {
+            case TokenType::LET:
+            case TokenType::RETURN:
+            case TokenType::FUNC:
+                statements.push_back(parse_statement());
+                continue;
+            default: {
+                auto expr_stmt = parse_expression_statement(false); // Will handle later
+                ExprAST* expr = (dynamic_cast<ExprStmtAST*>(expr_stmt.get())->expr).get();
+
+                TokenType token = current_token().type;
+                if (token == TokenType::SEMICOLON) {
+                    // Eat ';'
+                    eat_token();
+                    statements.push_back(std::move(expr_stmt));
+                } else if (token == TokenType::CLOSE_BRACES) {
+                    // No semicolon, yes } -> ending return block;
+                    return_value = std::move(dynamic_cast<ExprStmtAST*>(expr_stmt.get())->expr); // Yikes
+                    break;
+                } else if (dynamic_cast<IfExprAST*>(expr)) { // Dynamic cast to see which expressions don't need semicolons (e.g if expr)
+                    statements.push_back(std::move(expr_stmt));
+                } else {
+                    throw push_exception("Expected ';' after expression", current_token());
+                }
+            }
+        }
     }
 
     // Eat '}'
     eat_token();
 
-    return std::make_unique<BlockAST>(loc, std::move(statements));
+    return std::make_unique<BlockAST>(loc, std::move(statements), std::move(return_value));
 }
 
 std::unique_ptr<StmtAST> Parser::parse_var_declaration() {
@@ -394,8 +411,6 @@ std::unique_ptr<StmtAST> Parser::parse_statement() {
                     return parse_function();
                 case TokenType::__OMG:
                     return parse_omg();
-                case TokenType::IF:
-                    return parse_expression_statement(false); // No semicolons for if statement ends
                 default: {
                     std::cout << "You failed me.\n";
                     return nullptr;

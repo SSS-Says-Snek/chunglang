@@ -15,9 +15,9 @@ public:
     std::string exception_message;
     Token token;
 
-    std::string source_line;
+    const std::string& source_line;
 
-    ParseException(std::string exception_message, Token token, std::string source_line);
+    ParseException(std::string exception_message, Token token, const std::string& source_line);
     std::string write(const std::vector<std::string>& source_lines) override;
 };
 

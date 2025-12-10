@@ -7,7 +7,6 @@
 
 #include "chung/token.hpp"
 #include "chung/type.hpp"
-#include "chung/resolved_ast.hpp"
 
 class AST {
 public:
@@ -35,22 +34,25 @@ public:
     std::string stringify(size_t indent_level = 0) override = 0;
 };
 
-class BlockAST : public StmtAST {
-public: 
+class BlockAST : public ExprAST {
+public:
     std::vector<std::unique_ptr<StmtAST>> body;
+    std::unique_ptr<ExprAST> return_value;
 
-    BlockAST(SourceLocation loc, std::vector<std::unique_ptr<StmtAST>> body): StmtAST(loc), body{std::move(body)} {}
+    BlockAST(SourceLocation loc, std::vector<std::unique_ptr<StmtAST>> body, std::unique_ptr<ExprAST> return_value)
+        : ExprAST(loc), body{std::move(body)}, return_value{std::move(return_value)} {
+    }
 
     std::string stringify(size_t indent_level = 0) override;
-}; 
+};
 
 class DeclAST : public StmtAST {
-public: 
-    SourceLocation loc;
+public:
     std::string name;
     Type type;
 
-    DeclAST(SourceLocation loc, std::string name, Type type) : StmtAST(loc), name{std::move(name)}, type{std::move(type)} {
+    DeclAST(SourceLocation loc, std::string name, Type type)
+        : StmtAST(loc), name{std::move(name)}, type{std::move(type)} {
     }
 
     std::string stringify(size_t indent_level = 0) override = 0;
@@ -69,8 +71,7 @@ public:
 
 class ParamDeclareAST : public DeclAST {
 public:
-    ParamDeclareAST(SourceLocation loc, std::string name, Type type)
-        : DeclAST(loc, std::move(name), std::move(type)) {
+    ParamDeclareAST(SourceLocation loc, std::string name, Type type) : DeclAST(loc, std::move(name), std::move(type)) {
     }
 
     std::string stringify(size_t indent_level = 0) override;
@@ -83,7 +84,8 @@ public:
 
     FunctionAST(SourceLocation loc, std::string name, std::vector<ParamDeclareAST> parameters, Type return_type,
                 std::unique_ptr<BlockAST> body)
-        : DeclAST(loc, std::move(name), std::move(return_type)), parameters{std::move(parameters)}, body{std::move(body)} {
+        : DeclAST(loc, std::move(name), std::move(return_type)), parameters{std::move(parameters)},
+          body{std::move(body)} {
     }
 
     std::string stringify(size_t indent_level = 0) override;
@@ -156,7 +158,8 @@ public:
     PrimitiveAST(SourceLocation loc, TokenType type) : ExprAST(loc), type{type} {
     }
 
-    PrimitiveAST(SourceLocation loc, TokenType type, std::string value) : ExprAST(loc), type{type}, value{std::move(value)} {
+    PrimitiveAST(SourceLocation loc, TokenType type, std::string value)
+        : ExprAST(loc), type{type}, value{std::move(value)} {
     }
 
     std::string stringify(size_t indent_level = 0) override;
