@@ -41,7 +41,7 @@ public:
     std::unique_ptr<ResolvedCall> resolve_call(const CallAST& call);
     std::unique_ptr<ResolvedBinaryExpr> resolve_binop(const BinaryExprAST& binop);
     std::unique_ptr<ResolvedFunction> resolve_function(const FunctionAST& function);
-    static std::unique_ptr<ResolvedParamDeclare> resolve_param_decl(const ParamDeclareAST& param);
+    std::unique_ptr<ResolvedParamDeclare> resolve_param_decl(const ParamDeclareAST& param);
     std::unique_ptr<ResolvedBlock> resolve_block(const BlockAST& block);
     std::unique_ptr<ResolvedExpr> resolve_expr(const ExprAST& expr);
     std::unique_ptr<ResolvedExpr> resolve_expr_stmt(const ExprStmtAST& expr_stmt);

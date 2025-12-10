@@ -147,7 +147,7 @@ std::string IfExprAST::stringify(size_t indent_level) {
     string += indent_string(indent_level + 1, "Body:");
     string += body->stringify(indent_level + 2);
 
-    if (!else_body) {
+    if (else_body) {
         string += indent_string(indent_level + 1, "Else Body:");
         string += else_body->stringify(indent_level + 2);
     }

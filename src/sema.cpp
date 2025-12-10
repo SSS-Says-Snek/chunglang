@@ -173,7 +173,7 @@ std::unique_ptr<ResolvedBinaryExpr> Sema::resolve_binary_expr(const BinaryExprAS
     HANDLE_MAKE_VAR(resolved_rhs, resolve_expr(*binary_expr.rhs))
 
     if (resolved_lhs->type.ty != resolved_rhs->type.ty) { // TODO: operator up/down, struct, operator overloading?
-        std::cout << "TODOREPLACE but binary expression contains two different types\n";
+        push_exception("Binary expression contains two mismatching types", binary_expr.loc);
         return nullptr;
     }
 
@@ -206,13 +206,14 @@ std::unique_ptr<ResolvedPrimitive> Sema::resolve_primitive(const PrimitiveAST& p
 std::unique_ptr<ResolvedVariable> Sema::resolve_variable(const VariableAST& variable) {
     auto [resolved_decl, scope_level] = lookup_declaration(variable.name);
     if (!resolved_decl) {
-        std::cout << "TODOREPLACE but variable/symbol " + variable.name + " not found\n";
+        push_exception("Variable '" + variable.name + "' not found", variable.loc);
         return nullptr;
     }
 
     auto* resolved_var_decl = dynamic_cast<ResolvedDecl*>(resolved_decl);
     if (!resolved_var_decl) {
-        std::cout << "TODOREPLACE but symbol " + variable.name + " is not a variable\n";
+        push_exception("Symbol '" + variable.name + "' is not a variable", variable.loc);
+        return nullptr;
     }
 
     return std::make_unique<ResolvedVariable>(variable.loc, resolved_var_decl);
@@ -222,18 +223,18 @@ std::unique_ptr<ResolvedFunction> Sema::resolve_function(const FunctionAST& func
     std::optional<Type> return_type = resolve_type(function.type);
 
     if (!return_type) {
-        std::cout << "TODOREPLACE but invalid type\n";
+        push_exception("Invalid return type '" + function.type.name + "' for function '" + function.name + "'", function.loc);
         return nullptr;
     }
 
     if (function.name == "main") {
         if (return_type->ty != Ty::VOID) {
-            std::cout << "TODOREPLACE but main has to return void\n";
+            push_exception("Function 'main' must return void", function.loc);
             return nullptr;
         }
 
         if (!function.parameters.empty()) {
-            std::cout << "TODOREPLACE but main should have 0 parameters\n";
+            push_exception("Function 'main' must contain zero parameters", function.loc);
             return nullptr;
         }
     }
@@ -258,7 +259,7 @@ std::unique_ptr<ResolvedParamDeclare> Sema::resolve_param_decl(const ParamDeclar
     std::optional<Type> type = resolve_type(param.type);
 
     if (!type || type->ty == Ty::VOID) {
-        std::cout << "TODOREPLACE but invalid type for parameter\n";
+        push_exception("Invalid type for parameter '" + param.name + "'", param.loc);
         return nullptr;
     }
 
@@ -268,13 +269,13 @@ std::unique_ptr<ResolvedParamDeclare> Sema::resolve_param_decl(const ParamDeclar
 std::unique_ptr<ResolvedCall> Sema::resolve_call(const CallAST& call) {
     const auto& [resolved_decl, scope_level] = lookup_declaration(call.callee);
     if (!resolved_decl) {
-        std::cout << "TODOREPLACE but can't find callee " + call.callee + '\n';
+        push_exception("Cannot find function '" + call.callee + "'", call.loc);
         return nullptr;
     }
 
     const auto* resolved_function = dynamic_cast<ResolvedFunction*>(resolved_decl);
     if (!resolved_function) {
-        std::cout << "TODOREPLACE but callee " + call.callee + " is not a function\n";
+        push_exception("Callee '" + call.callee + "' is not a function", call.loc);
         return nullptr;
     }
 
@@ -284,7 +285,7 @@ std::unique_ptr<ResolvedCall> Sema::resolve_call(const CallAST& call) {
 
         HANDLE_MAKE_VAR(resolved_expr, resolve_expr(*argument))
         if (resolved_expr->type.ty != resolved_function->parameters[i]->type.ty) {
-            std::cout << "TODOREPLACE but argument type is mismatching with parameter type\n";
+            push_exception("Argument and parameter types do not match; expected " + resolved_function->parameters[i]->type.name + ", found " + resolved_expr->type.name, call.loc);
             return nullptr;
         }
 
@@ -393,7 +394,7 @@ std::vector<std::unique_ptr<ResolvedStmt>> Sema::resolve() {
             }
 
             if (resolved_body->return_value && resolved_body->return_value->type != function->type) {
-                std::cout << "TODOREPLACE but body return type does not match function return type\n";
+                push_exception("Function '" + function->name + "' body's type of " + resolved_body->return_value->type.name + " does not match return type of " + function->type.name, resolved_body->loc);
             }
 
             current_function->body = std::move(resolved_body);

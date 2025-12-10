@@ -4,13 +4,15 @@ func stuff(param: int64) {
 
 func aa(param: int64) {
     if (param > 2) {
-        print(67);
-        3
+        stuff(3);
+        if (param * param > 8) {
+            print(88888);
+        }
     } else {
-        print(111);
+        print(111 + param);
     }
 }
 
 func main() {
-    aa(4 - 3);
+    aa(4);
 }
