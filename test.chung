@@ -8,7 +8,6 @@ func aa(param: int64) {
         3
     } else {
         print(111);
-        4
     }
 }
 

@@ -70,8 +70,8 @@ std::string ParseException::write(const std::vector<std::string>& source_lines) 
     return string;
 }
 
-Parser::Parser(std::vector<Token> tokens, std::vector<std::string> source_lines, Context& ctx)
-    : tokens{std::move(tokens)}, source_lines{std::move(source_lines)}, ctx{ctx}, tokens_idx{0} {
+Parser::Parser(std::vector<Token> tokens, const std::vector<std::string>& source_lines, Context& ctx)
+    : tokens{std::move(tokens)}, source_lines{source_lines}, ctx{ctx}, tokens_idx{0} {
 }
 
 void Parser::synchronize() {

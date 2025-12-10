@@ -23,7 +23,7 @@ public:
 
 class Parser {
 public:
-    Parser(const std::vector<Token> tokens, const std::vector<std::string> source_lines, Context& ctx);
+    Parser(const std::vector<Token> tokens, const std::vector<std::string>& source_lines, Context& ctx);
 
     Token current_token() {
         if (tokens_idx >= tokens.size()) {

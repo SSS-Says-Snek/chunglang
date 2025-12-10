@@ -12,41 +12,41 @@
     auto identifier = (initialization);                                                                                \
     if (!identifier) return nullptr;
 
-SemaException::SemaException(std::string exception_message, Token token, const std::string& source_line)
-    : exception_message{std::move(exception_message)}, token{std::move(token)}, source_line{source_line} {
+SemaException::SemaException(std::string exception_message, SourceLocation loc, const std::string& source_line)
+    : exception_message{std::move(exception_message)}, loc{loc}, source_line{source_line} {
 }
 
 std::string SemaException::write(const std::vector<std::string>& source_lines) {
     std::string string{ANSI_RED};
-    string += "SemaException at line " + std::to_string(token.loc.line) + " column " +
-              std::to_string(token.loc.column) + ":\n" + ANSI_RESET;
+    string += "SemaException at line " + std::to_string(loc.line) + " column " +
+              std::to_string(loc.column) + ":\n" + ANSI_RESET;
     std::string carets;
 
     for (size_t i = 0; i <= source_line.length(); i++) {
-        if (i == token.loc.column) {
+        if (i == loc.column) {
             carets += ANSI_RED;
         }
-        if (i == token.loc.column + token.loc.token_length) {
+        if (i == loc.column + loc.token_length) {
             carets += ANSI_RESET;
         }
 
-        if (token.loc.column <= i && i < token.loc.column + token.loc.token_length) {
+        if (loc.column <= i && i < loc.column + loc.token_length) {
             carets += '^';
         } else {
             carets += '~';
         }
     }
 
-    if (token.loc.line > 0) {
-        string += "|\t" + source_lines[token.loc.line - 1 - 1] + '\n';
+    if (loc.line > 0) {
+        string += "|\t" + source_lines[loc.line - 1 - 1] + '\n';
     }
 
     string += "|\t";
     string += std::string{ANSI_RED} + source_line + ANSI_RESET + '\n';
     string += "|\t" + carets + '\n';
 
-    if (token.loc.line < source_lines.size()) {
-        string += "|\t" + source_lines[token.loc.line] + '\n';
+    if (loc.line < source_lines.size()) {
+        string += "|\t" + source_lines[loc.line] + '\n';
     }
     string += ANSI_RED + exception_message + ANSI_RESET + '\n';
 
@@ -146,7 +146,21 @@ std::unique_ptr<ResolvedIfExpr> Sema::resolve_if_expr(const IfExprAST& if_expr) 
 
         // TODO: Better type checking here
         if (resolved_body->type != resolved_else_body->type) {
-            std::cout << "TODOREPLACE but mismatched types between true and false bodies\n";
+            SourceLocation resolved_body_loc;
+            if (resolved_body->return_value) {
+                resolved_body_loc = resolved_body->return_value->loc;
+            } else {
+                resolved_body_loc = resolved_body->loc;
+            }
+            push_exception("Mismatched types between `if` and `else` bodies of if-expression", resolved_body_loc);
+
+            if (resolved_else_body && resolved_else_body->return_value) {
+                resolved_body_loc = resolved_else_body->return_value->loc;
+            } else {
+                resolved_body_loc = resolved_else_body->loc;
+            }
+            push_exception("Mismatched types between `if` and `else` bodies of if-expression", resolved_body_loc);
+            return nullptr;
         }
     }
 
@@ -337,7 +351,6 @@ std::vector<std::unique_ptr<ResolvedStmt>> Sema::resolve() {
     // First pass: just add the symbols of the global declarations (for stuff like forward referencing)
     bool error = false;
     for (auto&& stmt : ast) {
-        std::cout << stmt->loc.line << '\n';
         if (const auto* function = dynamic_cast<const FunctionAST*>(stmt.get())) {
             auto resolved_decl = resolve_function(*function);
 

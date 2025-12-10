@@ -6,30 +6,33 @@
 
 #include "ast.hpp"
 #include "chung/error.hpp"
+#include "chung/token.hpp"
 #include "resolved_ast.hpp"
 
 class SemaException : public Exception {
 public:
     std::string exception_message;
-    Token token;
+    SourceLocation loc;
 
     const std::string& source_line;
 
-    SemaException(std::string exception_message, Token token, const std::string& source_line);
+    SemaException(std::string exception_message, SourceLocation loc, const std::string& source_line);
     std::string write(const std::vector<std::string>& source_lines) override;
 };
 
 class Sema {
+private:
+    std::vector<SemaException> exceptions;
 public:
     std::vector<std::unique_ptr<StmtAST>> ast;
+    const std::vector<std::string>& source_lines;
 
     // 1 scope = std::vector<ResolvedDecl*>, multiple will be a chain
     std::vector<std::vector<ResolvedDecl*>> scopes;
 
     ResolvedFunction* current_function{nullptr};
 
-    explicit Sema(std::vector<std::unique_ptr<StmtAST>> ast) : ast{std::move(ast)} {
-
+    explicit Sema(std::vector<std::unique_ptr<StmtAST>> ast, const std::vector<std::string>& source_lines) : ast{std::move(ast)}, source_lines{source_lines} {
     }
 
     std::vector<std::unique_ptr<ResolvedStmt>> resolve();
@@ -59,11 +62,22 @@ public:
     void pop_scope() {
         scopes.pop_back();
     }
+
+    SemaException push_exception(const std::string& exception_message, const SourceLocation& loc) {
+        SemaException exception{exception_message, loc, source_lines[loc.line - 1]};
+        exceptions.push_back(exception);
+        return exception;
+    }
+
+    const std::vector<SemaException>& get_exceptions() {
+        return exceptions;
+    }
 };
 
 class ScopeRAII {
-    Sema *sema;
-public: 
+    Sema* sema;
+
+public:
     explicit ScopeRAII(Sema* sema) : sema{sema} {
         sema->add_scope();
     }

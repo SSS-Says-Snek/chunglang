@@ -87,6 +87,8 @@ int run_parse(std::vector<std::string>& args) {
         for (auto& parse_exception : parse_exceptions) {
             std::cout << parse_exception.write(source_lines) << '\n';
         }
+
+        return 1; // Early exit
     } else {
         std::cout << ANSI_GREEN << "Successfully parsed with no exceptions!\n\n" << ANSI_RESET;
     }
@@ -102,20 +104,31 @@ int run_parse(std::vector<std::string>& args) {
         for (auto& statement : statements) {
             std::cout << "\n│" + statement->stringify();
         }
-        std::cout << '\n';
+        std::cout << "\n\n";
 
-        if (!parse_exceptions.empty()) {
-            return 1;
-        }
+        std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET;
+        std::cout << ANSI_BOLD << "           Program Static Analysis            \n" << ANSI_RESET;
+        std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET << '\n';
+        std::cout << "Analyzing and Type Checking " << file_path << '\n';
 
-        Sema sema{std::move(statements)};
+        Sema sema{std::move(statements), source_lines};
         auto resolved_ast = sema.resolve();
+        auto sema_exceptions = sema.get_exceptions();
+
+        if (!sema_exceptions.empty()) {
+            for (auto& sema_exception : sema_exceptions) {
+                std::cout << sema_exception.write(source_lines) << '\n';
+            }
+
+            return 1; // Early exit
+        } else {
+            std::cout << ANSI_GREEN << "Successfully analyzed with no exceptions!\n\n" << ANSI_RESET;
+        }
 
         for (auto& resolved_statement : resolved_ast) {
             llvm::Value* statement_value = resolved_statement->codegen(ctx);
         }
 
-        std::cout << "\n\n";
         std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET;
         std::cout << ANSI_BOLD << "      Module IR (temporary trust me bro)      \n" << ANSI_RESET;
         std::cout << ANSI_CYAN << "==============================================\n" << ANSI_RESET << '\n';
