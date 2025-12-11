@@ -2,14 +2,13 @@ func stuff(param: int64) {
     print(param);
 }
 
-func aa(param: int64) {
+func aa(param: int64) -> int64 {
     if (param > 2) {
         stuff(3);
-        if (param * param > 8) {
-            print(88888);
-        }
+        3
     } else {
         print(111 + param);
+        4
     }
 }
 

@@ -9,6 +9,7 @@ Context::Context()
         {Type::uint64, llvm::Type::getInt64Ty(context)},
         {Type::int64, llvm::Type::getInt64Ty(context)},
         {Type::float64, llvm::Type::getDoubleTy(context)},
+        {Type::void_, llvm::Type::getVoidTy(context)}
         // {Type::tstring, builder.getInt8PtrTy()}
     };
 }

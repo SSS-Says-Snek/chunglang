@@ -2,6 +2,7 @@
 #include <iostream>
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Constants.h>
+#include <llvm/IR/Instructions.h>
 
 llvm::Value* ResolvedVarDeclare::codegen(Context& ctx) {
     // For now
@@ -14,15 +15,19 @@ llvm::Value* ResolvedParamDeclare::codegen(Context&  /*ctx*/) {
     return nullptr;
 }
 
-llvm::Value* ResolvedBlock::codegen(Context& ctx) {
+llvm::Value* ResolvedBlock::codegen(Context& ctx, bool create_ret_instructions) {
     for (auto& stmt : body) {
         stmt->codegen(ctx);
     }
 
+    llvm::Value* return_expr = nullptr;
     if (return_value) {
-        return_value->codegen(ctx);
+        return_expr = return_value->codegen(ctx);
+        if (create_ret_instructions) {
+            ctx.builder.CreateRet(return_expr);
+        }
     }
-    return nullptr;
+    return return_expr;
 }
 
 llvm::Value* ResolvedFunction::codegen(Context& ctx) {
@@ -38,7 +43,7 @@ llvm::Value* ResolvedFunction::codegen(Context& ctx) {
 
     // FOR NOW RET VOID
     llvm::FunctionType* function_type =
-        llvm::FunctionType::get(llvm::Type::getVoidTy(ctx.context), parameter_types, false);
+        llvm::FunctionType::get(ctx.llvm_types.at(type), parameter_types, false);
     llvm::Function* function =
         llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, name, ctx.module.get());
 
@@ -56,10 +61,12 @@ llvm::Value* ResolvedFunction::codegen(Context& ctx) {
     llvm::BasicBlock* function_block = llvm::BasicBlock::Create(ctx.context, "entry", function);
     ctx.builder.SetInsertPoint(function_block);
 
-    body->codegen(ctx);
+    body->codegen(ctx, true);
 
     // Void FOR NOW
-    ctx.builder.CreateRet(nullptr);
+    if (type.ty == Ty::VOID) {
+        ctx.builder.CreateRet(nullptr);
+    }
     llvm::verifyFunction(*function);
 
     return nullptr;
@@ -85,19 +92,25 @@ llvm::Value* ResolvedIfExpr::codegen(Context& ctx) {
 
     if_block->insertInto(current_function);
     ctx.builder.SetInsertPoint(if_block);
-    body->codegen(ctx);
+    llvm::Value* body_value = body->codegen(ctx, false);
     ctx.builder.CreateBr(cont_block);
+
+    llvm::Value* else_value = nullptr;
 
     if (else_body) {
         else_block->insertInto(current_function);
         ctx.builder.SetInsertPoint(else_block);
-        else_body->codegen(ctx);
+        else_value = else_body->codegen(ctx, false);
         ctx.builder.CreateBr(cont_block);
     }
 
     cont_block->insertInto(current_function);
     ctx.builder.SetInsertPoint(cont_block);
-    return nullptr;
+
+    llvm::PHINode* node = ctx.builder.CreatePHI(ctx.llvm_types.at(type), 2, "if.tmp");
+    node->addIncoming(body_value, if_block);
+    node->addIncoming(else_value, else_block);
+    return node;
 }
 
 llvm::Value* ResolvedOmg::codegen(Context&  /*ctx*/) {

@@ -3,6 +3,7 @@
 #include "chung/context.hpp"
 #include "chung/token.hpp"
 #include <llvm/IR/Value.h>
+#include <llvm/Support/ErrorHandling.h>
 #include <memory>
 #include <string>
 #include <utility>
@@ -45,11 +46,15 @@ public:
 
     ResolvedBlock(SourceLocation loc, std::vector<std::unique_ptr<ResolvedStmt>> body,
                   std::unique_ptr<ResolvedExpr> return_value)
-        : ResolvedExpr(loc, return_value ? return_value->type : Type::void_), body{std::move(body)}, return_value{std::move(return_value)} {
+        : ResolvedExpr(loc, return_value ? return_value->type : Type::void_), body{std::move(body)},
+          return_value{std::move(return_value)} {
     }
 
     // std::string stringify(size_t indent_level = 0) override;
-    llvm::Value* codegen(Context& ctx) override;
+    llvm::Value* codegen(Context& /*ctx*/) override {
+        llvm_unreachable("This should NOT be used");
+    }
+    llvm::Value* codegen(Context& ctx, bool create_ret_instructions);
 };
 
 class ResolvedDecl : public ResolvedStmt {
@@ -161,9 +166,10 @@ public:
     std::unique_ptr<ResolvedBlock> body;
     std::unique_ptr<ResolvedBlock> else_body;
 
-    ResolvedIfExpr(SourceLocation loc, Type type, std::unique_ptr<ResolvedExpr> condition, std::unique_ptr<ResolvedBlock> body,
-                   std::unique_ptr<ResolvedBlock> else_body)
-        : ResolvedExpr(loc, std::move(type)), condition{std::move(condition)}, body{std::move(body)}, // Sema will fill in type
+    ResolvedIfExpr(SourceLocation loc, Type type, std::unique_ptr<ResolvedExpr> condition,
+                   std::unique_ptr<ResolvedBlock> body, std::unique_ptr<ResolvedBlock> else_body)
+        : ResolvedExpr(loc, std::move(type)), condition{std::move(condition)},
+          body{std::move(body)},            // Sema will fill in type
           else_body{std::move(else_body)} { // Too lazy for type; TODO
     }
 
