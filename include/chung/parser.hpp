@@ -15,15 +15,15 @@ public:
     std::string exception_message;
     Token token;
 
-    std::string source_line;
+    const std::string& source_line;
 
-    ParseException(std::string exception_message, Token token, std::string source_line);
+    ParseException(std::string exception_message, Token token, const std::string& source_line);
     std::string write(const std::vector<std::string>& source_lines) override;
 };
 
 class Parser {
 public:
-    Parser(const std::vector<Token> tokens, const std::vector<std::string> source_lines, Context& ctx);
+    Parser(const std::vector<Token> tokens, const std::vector<std::string>& source_lines, Context& ctx);
 
     Token current_token() {
         if (tokens_idx >= tokens.size()) {
@@ -84,7 +84,7 @@ public:
     std::unique_ptr<ExprAST> parse_primary();
 
     // Statements
-    std::vector<std::unique_ptr<StmtAST>> parse_block();
+    std::unique_ptr<BlockAST> parse_block();
     std::unique_ptr<StmtAST> parse_var_declaration();
     std::unique_ptr<StmtAST> parse_function();
     std::unique_ptr<StmtAST> parse_omg();

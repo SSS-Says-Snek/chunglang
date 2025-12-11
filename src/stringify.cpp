@@ -4,13 +4,19 @@
 
 #include <map>
 
+const std::string indent_prefix = "├── ";
+
 inline std::string indent(size_t indent_level) {
     std::string indentation;
     for (size_t i = 0; i < indent_level; i++) {
-        indentation += "\t";
+        indentation += "│   ";
     }
 
     return indentation;
+}
+
+std::string indent_string(size_t indent_level, const std::string& string) {
+    return '\n' + indent(indent_level) + indent_prefix + string;
 }
 
 std::string stringify_op(const TokenType& op, bool verbose) {
@@ -48,7 +54,8 @@ std::string stringify_symbol(const TokenType& symbol, bool verbose) {
         {TokenType::DOT, {"Dot", "."}},
         {TokenType::COMMA, {"Comma", ","}},
         {TokenType::COLON, {"Colon", ":"}},
-        {TokenType::SEMICOLON, {"Semicolon", ";"}}};
+        {TokenType::SEMICOLON, {"Semicolon", ";"}},
+        {TokenType::ARROW, {"Arrow", "->"}}};
 
     if (verbose) {
         return token_to_string.at(symbol).first;
@@ -58,7 +65,7 @@ std::string stringify_symbol(const TokenType& symbol, bool verbose) {
 
 std::string stringify_keyword(const TokenType& keyword) {
     static const std::map<TokenType, std::string> token_to_string = {
-        {TokenType::FUNC, "Func"},   {TokenType::LET, "Let"},     {TokenType::IF, "If"},
+        {TokenType::FUNC, "Func"}, {TokenType::LET, "Let"},     {TokenType::IF, "If"},
         {TokenType::ELSE, "Else"}, {TokenType::__OMG, "__OMG"},
     };
     return token_to_string.at(keyword);
@@ -120,56 +127,68 @@ std::string ExprAST::stringify(size_t indent_level) {
     return indent(indent_level) + "Goofy expression";
 }
 
-std::string IfExprAST::stringify(size_t indent_level) {
-    std::string indentation = indent(indent_level);
-    std::string string{indentation + "If Conditional:"};
-
-    string += "\n\t" + indentation + "Condition:";
-    string += "\n" + condition->stringify(indent_level + 2);
-    string += "\n\t" + indentation + "Body:";
+std::string BlockAST::stringify(size_t indent_level) {
+    std::string string;
     for (auto& statement : body) {
-        string += "\n" + statement->stringify(indent_level + 2);
+        string += statement->stringify(indent_level);
+    }
+    if (return_value) {
+        string += return_value->stringify(indent_level);
     }
 
-    if (!else_body.empty()) {
-        string += "\n\t" + indentation + "Else Body:";
-        for (auto& statement : else_body) {
-            string += "\n" + statement->stringify(indent_level + 2);
-        }
+    return string;
+}
+
+std::string IfExprAST::stringify(size_t indent_level) {
+    std::string string{indent_string(indent_level, "If Conditional:")};
+
+    string += indent_string(indent_level + 1, "Condition:");
+    string += condition->stringify(indent_level + 2);
+    string += indent_string(indent_level + 1, "Body:");
+    string += body->stringify(indent_level + 2);
+
+    if (else_body) {
+        string += indent_string(indent_level + 1, "Else Body:");
+        string += else_body->stringify(indent_level + 2);
     }
 
     return string;
 }
 
 std::string FunctionAST::stringify(size_t indent_level) {
-    std::string indentation = indent(indent_level);
-    std::string string{indentation + "Function Declaration:"};
+    std::string string{indent_string(indent_level, "Function Declaration:")};
 
-    // string += "\n\t" + indentation + "Indentation level: " + std::to_string(indent_level);
-    string += "\n\t" + indentation + "Name: " + name;
-    string += "\n\t" + indentation + "Parameters:";
+    string += indent_string(indent_level + 1, "Name: " + name);
+    string += indent_string(indent_level + 1, "Parameters:");
 
     for (size_t i = 0; i < parameters.size(); i++) {
-        string += "\n\t\t" + indentation + "Parameter " + std::to_string(i + 1) + ": " + parameters[i].name;
+        string += indent_string(indent_level + 2, "Parameter " + std::to_string(i + 1) + ": " + parameters[i].name);
     }
     if (parameters.size() == 0) {
-        string += "\n\t\t" + indentation + "No Parameters";
+        string += indent_string(indent_level + 2, "No Parameters");
     }
+    string += indent_string(indent_level + 1, "Return Type: " + type.name);
 
-    string += "\n\t" + indentation + "Body:";
-    for (auto& statement : body) {
-        string += "\n" + statement->stringify(indent_level + 2);
-    }
+    string += indent_string(indent_level + 1, "Body:");
+    string += body->stringify(indent_level + 2);
 
     return string;
 }
 
 std::string VarDeclareAST::stringify(size_t indent_level) {
+    std::string string{indent_string(indent_level, "Variable Declaration:")};
+
+    string += indent_string(indent_level + 1, "Name: " + name);
+    string += indent_string(indent_level + 1, "Value:") + expr->stringify(indent_level + 2);
+
+    return string;
+}
+
+std::string ParamDeclareAST::stringify(size_t indent_level) {
     std::string indentation = indent(indent_level);
     std::string string{indentation + "Variable Declaration:"};
 
     string += "\n\t" + indentation + "Name: " + name;
-    string += "\n\t" + indentation + "Value:\n" + expr->stringify(indent_level + 2);
 
     return string;
 }
@@ -184,35 +203,32 @@ std::string OmgAST::stringify(size_t indent_level) {
 }
 
 std::string ExprStmtAST::stringify(size_t indent_level) {
-    std::string indentation = indent(indent_level);
-    std::string string{indentation + "Expression Statement:"};
+    std::string string{indent_string(indent_level, "Expression Statement:")};
 
     // string += "\n\t" + indentation + "Indentation level: " + std::to_string(indent_level);
-    string += "\n" + expr->stringify(indent_level + 1);
+    string += expr->stringify(indent_level + 1);
     return string;
 }
 
 std::string BinaryExprAST::stringify(size_t indent_level) {
-    std::string indentation = indent(indent_level);
-    std::string string{indentation + "Binary Operation:"};
+    std::string string{indent_string(indent_level, "Binary Operation:")};
 
     // string += "\n\t" + indentation + "Indentation level: " + std::to_string(indent_level);
-    string += "\n\t" + indentation + "Operator: " + stringify_op(op, false);
+    string += indent_string(indent_level + 1, "Operator: " + stringify_op(op, false));
 
     // 2 new indentation level: 1 for "Binary Operation" and another for the side
-    string += "\n\t" + indentation + "Left Hand:\n" + lhs->stringify(indent_level + 2);
-    string += "\n\t" + indentation + "Right Hand:\n" + rhs->stringify(indent_level + 2);
+    string += indent_string(indent_level + 1, "Left Hand:") + lhs->stringify(indent_level + 2);
+    string += indent_string(indent_level + 1, "Right Hand:") + rhs->stringify(indent_level + 2);
 
     return string;
 }
 
 std::string CallAST::stringify(size_t indent_level) {
-    std::string indentation = indent(indent_level);
-    std::string string{indentation + "Function Call:"};
+    std::string string{indent_string(indent_level, "Function Call:")};
 
     // string += "\n\t" + indentation + "Indentation level: " + std::to_string(indent_level);
-    string += "\n\t" + indentation + "Name: " + callee;
-    string += "\n\t" + indentation + "Arguments:\n";
+    string += indent_string(indent_level + 1, "Name: " + callee);
+    string += indent_string(indent_level + 1, "Arguments:");
 
     for (size_t i = 0; i < arguments.size(); i++) {
         /*
@@ -224,35 +240,32 @@ std::string CallAST::stringify(size_t indent_level) {
                 Argument 2:
                     skibidi
         */
-        string +=
-            indentation + "\t\tArgument " + std::to_string(i + 1) + ":\n" + arguments[i]->stringify(indent_level + 3);
+        string += indent_string(indent_level + 2, "Argument " + std::to_string(i + 1) + ":");
+        string += arguments[i]->stringify(indent_level + 3);
     }
 
     if (arguments.size() == 0) {
-        string += indentation + "\t\tNo Arguments";
+        string += indent_string(indent_level + 3, "No Arguments");
     }
     return string;
 }
 
 std::string PrimitiveAST::stringify(size_t indent_level) {
-    std::string indentation = indent(indent_level);
-
-    switch (value_type) {
-        case ValueType::INT64:
-            return indentation + "Int64: " + std::to_string(int64) + '\n';
-        case ValueType::UINT64:
-            return indentation + "UInt64: " + std::to_string(uint64) + '\n';
-        case ValueType::FLOAT64:
-            return indentation + "Float64: " + std::to_string(float64) + '\n';
-        case ValueType::STRING:
-            return indentation + "String: \"" + string + "\"\n";
-        default:
-            return indentation + "Invalid\n";
-    }
+    // switch (value_type) {
+    //     case ValueType::INT64:
+    //         return indentation + "Int64: " + std::to_string(int64) + '\n';
+    //     case ValueType::UINT64:
+    //         return indentation + "UInt64: " + std::to_string(uint64) + '\n';
+    //     case ValueType::FLOAT64:
+    //         return indentation + "Float64: " + std::to_string(float64) + '\n';
+    //     case ValueType::STRING:
+    //         return indentation + "String: \"" + string + "\"\n";
+    //     default:
+    //         return indentation + "Invalid\n";
+    // }
+    return indent_string(indent_level, value);
 }
 
 std::string VariableAST::stringify(size_t indent_level) {
-    std::string indentation = indent(indent_level);
-
-    return indentation + "Variable Name: " + name + '\n';
+    return indent_string(indent_level, "Variable Name: " + name);
 }

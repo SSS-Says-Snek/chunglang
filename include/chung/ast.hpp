@@ -5,7 +5,6 @@
 #include <utility>
 #include <vector>
 
-#include "chung/context.hpp"
 #include "chung/token.hpp"
 #include "chung/type.hpp"
 
@@ -13,72 +12,103 @@ class AST {
 public:
     virtual ~AST() = default;
     virtual std::string stringify(size_t indent_level = 0) = 0;
-    virtual llvm::Value* codegen(Context& ctx) = 0;
 };
 
 class StmtAST : public AST {
 public:
+    SourceLocation loc;
+
+    StmtAST(SourceLocation loc) : loc{loc} {
+    }
+
     std::string stringify(size_t indent_level = 0) override = 0;
-    llvm::Value* codegen(Context& ctx) override = 0;
 };
 
 class ExprAST : public AST {
 public:
+    SourceLocation loc;
+
+    ExprAST(SourceLocation loc) : loc{loc} {
+    }
+
     std::string stringify(size_t indent_level = 0) override = 0;
-    llvm::Value* codegen(Context& ctx) override = 0;
 };
 
-class VarDeclareAST : public StmtAST {
+class BlockAST : public ExprAST {
+public:
+    std::vector<std::unique_ptr<StmtAST>> body;
+    std::unique_ptr<ExprAST> return_value;
+
+    BlockAST(SourceLocation loc, std::vector<std::unique_ptr<StmtAST>> body, std::unique_ptr<ExprAST> return_value)
+        : ExprAST(loc), body{std::move(body)}, return_value{std::move(return_value)} {
+    }
+
+    std::string stringify(size_t indent_level = 0) override;
+};
+
+class DeclAST : public StmtAST {
 public:
     std::string name;
-    Type& type;
+    Type type;
+
+    DeclAST(SourceLocation loc, std::string name, Type type)
+        : StmtAST(loc), name{std::move(name)}, type{std::move(type)} {
+    }
+
+    std::string stringify(size_t indent_level = 0) override = 0;
+};
+
+class VarDeclareAST : public DeclAST {
+public:
     std::unique_ptr<ExprAST> expr;
 
-    VarDeclareAST(std::string name, Type& type, std::unique_ptr<ExprAST> expr)
-        : name{std::move(name)}, type{type}, expr{std::move(expr)} {
+    VarDeclareAST(SourceLocation loc, std::string name, Type type, std::unique_ptr<ExprAST> expr)
+        : DeclAST(loc, std::move(name), std::move(type)), expr{std::move(expr)} {
     }
 
     std::string stringify(size_t indent_level = 0) override;
-    llvm::Value* codegen(Context& ctx) override;
 };
 
-class FunctionAST : public StmtAST {
+class ParamDeclareAST : public DeclAST {
 public:
-    std::string name;
-    std::vector<VarDeclareAST> parameters;
-    std::vector<std::unique_ptr<StmtAST>> body;
-
-    // FOR NOW; I just want things to work
-    std::unique_ptr<ExprAST> return_type;
-
-    FunctionAST(std::string name, std::vector<VarDeclareAST> parameters, std::vector<std::unique_ptr<StmtAST>> body)
-        : name{std::move(name)}, parameters{std::move(parameters)}, body{std::move(body)} {
+    ParamDeclareAST(SourceLocation loc, std::string name, Type type) : DeclAST(loc, std::move(name), std::move(type)) {
     }
 
     std::string stringify(size_t indent_level = 0) override;
-    llvm::Value* codegen(Context& ctx) override;
+};
+
+class FunctionAST : public DeclAST {
+public:
+    std::vector<ParamDeclareAST> parameters;
+    std::unique_ptr<BlockAST> body;
+
+    FunctionAST(SourceLocation loc, std::string name, std::vector<ParamDeclareAST> parameters, Type return_type,
+                std::unique_ptr<BlockAST> body)
+        : DeclAST(loc, std::move(name), std::move(return_type)), parameters{std::move(parameters)},
+          body{std::move(body)} {
+    }
+
+    std::string stringify(size_t indent_level = 0) override;
 };
 
 class OmgAST : public StmtAST {
 public:
     std::unique_ptr<ExprAST> expr;
 
-    OmgAST(std::unique_ptr<ExprAST> expr) : expr{std::move(expr)} {
+    OmgAST(SourceLocation loc, std::unique_ptr<ExprAST> expr) : StmtAST(loc), expr{std::move(expr)} {
     }
 
     std::string stringify(size_t indent_level = 0) override;
-    llvm::Value* codegen(Context& ctx) override;
 };
 
 class ExprStmtAST : public StmtAST {
 public:
     std::unique_ptr<ExprAST> expr;
 
-    ExprStmtAST(std::unique_ptr<ExprAST> expr) : expr{std::move(expr)} {
+    ExprStmtAST(SourceLocation loc, std::unique_ptr<ExprAST> expr) : StmtAST(loc), expr{std::move(expr)} {
     }
 
     std::string stringify(size_t indent_level = 0) override;
-    llvm::Value* codegen(Context& ctx) override;
 };
 
 class BinaryExprAST : public ExprAST {
@@ -87,12 +117,11 @@ public:
     std::unique_ptr<ExprAST> lhs;
     std::unique_ptr<ExprAST> rhs;
 
-    BinaryExprAST(TokenType op, std::unique_ptr<ExprAST> lhs, std::unique_ptr<ExprAST> rhs)
-        : op{op}, lhs{std::move(lhs)}, rhs{std::move(rhs)} {
+    BinaryExprAST(SourceLocation loc, TokenType op, std::unique_ptr<ExprAST> lhs, std::unique_ptr<ExprAST> rhs)
+        : ExprAST(loc), op{op}, lhs{std::move(lhs)}, rhs{std::move(rhs)} {
     }
 
     std::string stringify(size_t indent_level) override;
-    llvm::Value* codegen(Context& ctx) override;
 };
 
 class CallAST : public ExprAST {
@@ -100,62 +129,48 @@ public:
     std::string callee;
     std::vector<std::unique_ptr<ExprAST>> arguments;
 
-    CallAST(std::string callee, std::vector<std::unique_ptr<ExprAST>> arguments)
-        : callee{std::move(callee)}, arguments{std::move(arguments)} {
+    CallAST(SourceLocation loc, std::string callee, std::vector<std::unique_ptr<ExprAST>> arguments)
+        : ExprAST(loc), callee{std::move(callee)}, arguments{std::move(arguments)} {
     }
 
     std::string stringify(size_t indent_level) override;
-    llvm::Value* codegen(Context& ctx) override;
 };
 
 class IfExprAST : public ExprAST {
 public:
     std::unique_ptr<ExprAST> condition;
-    std::vector<std::unique_ptr<StmtAST>> body;
-    std::vector<std::unique_ptr<StmtAST>> else_body;
+    std::unique_ptr<BlockAST> body;
+    std::unique_ptr<BlockAST> else_body;
 
-    IfExprAST(std::unique_ptr<ExprAST> condition, std::vector<std::unique_ptr<StmtAST>> body,
-              std::vector<std::unique_ptr<StmtAST>> else_body)
-        : condition{std::move(condition)}, body{std::move(body)}, else_body{std::move(else_body)} {
+    IfExprAST(SourceLocation loc, std::unique_ptr<ExprAST> condition, std::unique_ptr<BlockAST> body,
+              std::unique_ptr<BlockAST> else_body)
+        : ExprAST(loc), condition{std::move(condition)}, body{std::move(body)}, else_body{std::move(else_body)} {
     }
 
     std::string stringify(size_t indent_level) override;
-    llvm::Value* codegen(Context& ctx) override;
 };
 
 class PrimitiveAST : public ExprAST {
 public:
-    union {
-        int64_t int64{};
-        uint64_t uint64;
-        double float64;
-    };
-    std::string string;
+    TokenType type;
+    std::string value;
 
-    enum ValueType : int8_t { INVALID, INT64, UINT64, FLOAT64, STRING } value_type;
+    PrimitiveAST(SourceLocation loc, TokenType type) : ExprAST(loc), type{type} {
+    }
 
-    PrimitiveAST() : value_type{ValueType::INVALID} {
-    }
-    PrimitiveAST(int64_t int64) : int64{int64}, value_type{ValueType::INT64} {
-    }
-    PrimitiveAST(uint64_t uint64) : uint64{uint64}, value_type{ValueType::UINT64} {
-    }
-    PrimitiveAST(double float64) : float64{float64}, value_type{ValueType::FLOAT64} {
-    }
-    PrimitiveAST(std::string string) : string{std::move(string)}, value_type{ValueType::STRING} {
+    PrimitiveAST(SourceLocation loc, TokenType type, std::string value)
+        : ExprAST(loc), type{type}, value{std::move(value)} {
     }
 
     std::string stringify(size_t indent_level = 0) override;
-    llvm::Value* codegen(Context& ctx) override;
 };
 
 class VariableAST : public ExprAST {
 public:
     std::string name;
 
-    VariableAST(std::string name) : name{std::move(name)} {
+    VariableAST(SourceLocation loc, std::string name) : ExprAST(loc), name{std::move(name)} {
     }
 
     std::string stringify(size_t indent_level = 0) override;
-    llvm::Value* codegen(Context& ctx) override;
 };

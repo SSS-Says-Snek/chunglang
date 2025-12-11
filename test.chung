@@ -2,19 +2,16 @@ func stuff(param: int64) {
     print(param);
 }
 
-func aa(param: int64) {
-    print(param + 3)
+func aa(param: int64) -> int64 {
+    if (param > 2) {
+        stuff(3);
+        3
+    } else {
+        print(111 + param);
+        4
+    }
 }
 
 func main() {
-    stuff(4 + 2);
-    aa(55);
-    print(3);
-    print(4);
-    
-    if (2 > 2) {
-        print(67);
-    } else {
-        print(111);
-    }
+    aa(4);
 }

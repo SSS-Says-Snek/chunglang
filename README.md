@@ -28,6 +28,34 @@ with modern syntax and programming language features.
 - Modules
 - Multiparadigm (supporting FP and OOP)
 
+## Example
+
+Examples are located in the `examples/` directory. Below is a currently working example of a chunglang program:
+
+```
+// test.chung
+func stuff(param: int64) {
+    print(param);
+}
+
+func aa(param: int64) -> int64 {
+    // Here is a comment
+    if (param > 2) {
+        stuff(3);
+        3
+    } else {
+        print(111 + param);
+        4
+    }
+}
+
+func main() {
+    aa(4);
+}
+```
+
+The file extension for chunglang is `.chung`.
+
 ## Install
 
 Currently, chunglang is not on any package manager repository. Thus, 
@@ -56,4 +84,5 @@ Compile the test program
 ```
 
 The resulting binary should be located in `./chungbuild/` and should be named `output.out`.
+
 
