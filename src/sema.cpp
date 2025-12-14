@@ -102,6 +102,14 @@ std::unique_ptr<ResolvedStmt> Sema::resolve_stmt(const StmtAST& stmt) {
         return std::make_unique<ResolvedExprStmt>(stmt.loc, std::move(resolved_expr));
     }
 
+    if (const auto* var_decl = dynamic_cast<const VarDeclareAST*>(&stmt)) {
+        auto resolved_var_decl = resolve_var_decl(*var_decl);
+        if (!resolved_var_decl || !add_declaration(*dynamic_cast<ResolvedDecl*>(resolved_var_decl.get()))) { // Holy crap
+            return nullptr;
+        }
+        return resolved_var_decl;
+    }
+
     // Every stmt should be covered already; if not, implementation error
     llvm_unreachable("Unhandled statement in Sema::resolve_stmt");
 }
@@ -266,6 +274,35 @@ std::unique_ptr<ResolvedParamDeclare> Sema::resolve_param_decl(const ParamDeclar
     return std::make_unique<ResolvedParamDeclare>(param.loc, param.name, *type);
 }
 
+std::unique_ptr<ResolvedVarDeclare> Sema::resolve_var_decl(const VarDeclareAST& var_decl) {
+    if (var_decl.type == Type::none && !var_decl.expr) {
+        push_exception("Uninitialized variable must define a type", var_decl.loc);
+        return nullptr;
+    }
+
+    std::unique_ptr<ResolvedExpr> resolved_expr;
+    if (var_decl.expr) {
+        resolved_expr = resolve_expr(*var_decl.expr);
+        if (!resolved_expr) {
+            return nullptr;
+        }
+    }
+
+    Type adjusted_type = (var_decl.type.ty == Ty::NONE) ? resolved_expr->type : var_decl.type;
+    std::optional<Type> resolved_type = resolve_type(adjusted_type);
+
+    if (!resolved_type || resolved_type->ty == Ty::VOID) {
+        push_exception("Variable '" + var_decl.name + "' has invalid type of " + adjusted_type.name, var_decl.loc);
+        return nullptr;
+    }
+
+    if (resolved_expr && resolved_expr->type != resolved_type) {
+        push_exception("Variable '" + var_decl.name + "' type declaration does not match initializer expression type", var_decl.loc);
+    }
+
+    return std::make_unique<ResolvedVarDeclare>(var_decl.loc, var_decl.name, *resolved_type, std::move(resolved_expr), var_decl.is_mutable);
+}
+
 std::unique_ptr<ResolvedCall> Sema::resolve_call(const CallAST& call) {
     const auto& [resolved_decl, scope_level] = lookup_declaration(call.callee);
     if (!resolved_decl) {
@@ -321,6 +358,7 @@ std::unique_ptr<ResolvedBlock> Sema::resolve_block(const BlockAST& block) {
 }
 
 std::optional<Type> Sema::resolve_type(Type parsed_type) {
+    // TODO: Include user-defined structs/types
     if (parsed_type.ty == Ty::USER) {
         return std::nullopt;
     }

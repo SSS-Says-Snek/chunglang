@@ -5,11 +5,19 @@
 #include <llvm/IR/Instructions.h>
 
 llvm::Value* ResolvedVarDeclare::codegen(Context& ctx) {
-    // For now
-    return expr->codegen(ctx);
+    llvm::Function* current_function = ctx.builder.GetInsertBlock()->getParent();
+
+    llvm::AllocaInst* var = ctx.allocate_stack_variable(name, ctx.llvm_types.at(type));
+
+    if (expr) {
+        ctx.builder.CreateStore(expr->codegen(ctx), var);
+    }
+
+    ctx.named_values[this] = var;
+    return nullptr;
 }
 
-llvm::Value* ResolvedParamDeclare::codegen(Context&  /*ctx*/) {
+llvm::Value* ResolvedParamDeclare::codegen(Context& /*ctx*/) {
     // Not using for now I think
     std::cout << "TODOREPLACE but you shouldn't be here.\n";
     return nullptr;
@@ -20,6 +28,7 @@ llvm::Value* ResolvedBlock::codegen(Context& ctx, bool create_ret_instructions) 
         stmt->codegen(ctx);
     }
 
+    // TODO: FLAWED: MUST MOVE THIS OUTSIDE SO THAT BLOCKS WITH RETURN VALUES CAN DO SOMETHING OTHER THAN RETURN
     llvm::Value* return_expr = nullptr;
     if (return_value) {
         return_expr = return_value->codegen(ctx);
@@ -42,25 +51,29 @@ llvm::Value* ResolvedFunction::codegen(Context& ctx) {
     }
 
     // FOR NOW RET VOID
-    llvm::FunctionType* function_type =
-        llvm::FunctionType::get(ctx.llvm_types.at(type), parameter_types, false);
+    llvm::FunctionType* function_type = llvm::FunctionType::get(ctx.llvm_types.at(type), parameter_types, false);
     llvm::Function* function =
         llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, name, ctx.module.get());
+
+
+    // Basic Block
+    llvm::BasicBlock* function_block = llvm::BasicBlock::Create(ctx.context, "entry", function);
+    ctx.builder.SetInsertPoint(function_block);
+
+    llvm::Value* undef = llvm::UndefValue::get(ctx.builder.getInt32Ty());
+    ctx.variable_insert_point = new llvm::BitCastInst(undef, undef->getType(), "alloca.placeholder", function_block);
 
     ctx.named_values.clear();
 
     // Set parameter names
     size_t i = 0;
     for (auto& function_parameter : function->args()) {
-        auto& parameter_name = parameters[i++]->name;
+        auto& parameter_name = parameters[i]->name;
         function_parameter.setName(parameter_name);
-        ctx.named_values[parameter_name] = &function_parameter;
+        ctx.named_values[parameters[i].get()] = &function_parameter;
+
+        i++;
     }
-
-    // Basic Block
-    llvm::BasicBlock* function_block = llvm::BasicBlock::Create(ctx.context, "entry", function);
-    ctx.builder.SetInsertPoint(function_block);
-
     body->codegen(ctx, true);
 
     // Void FOR NOW
@@ -68,6 +81,9 @@ llvm::Value* ResolvedFunction::codegen(Context& ctx) {
         ctx.builder.CreateRet(nullptr);
     }
     llvm::verifyFunction(*function);
+
+    ctx.variable_insert_point->eraseFromParent();
+    ctx.variable_insert_point = nullptr;
 
     return nullptr;
 }
@@ -107,13 +123,18 @@ llvm::Value* ResolvedIfExpr::codegen(Context& ctx) {
     cont_block->insertInto(current_function);
     ctx.builder.SetInsertPoint(cont_block);
 
-    llvm::PHINode* node = ctx.builder.CreatePHI(ctx.llvm_types.at(type), 2, "if.tmp");
-    node->addIncoming(body_value, if_block);
-    node->addIncoming(else_value, else_block);
-    return node;
+    // If if-exprs actually return something, add a PHI node
+    if (type != Type::void_) {
+        llvm::PHINode* node = ctx.builder.CreatePHI(ctx.llvm_types.at(type), 2, "if.tmp");
+        node->addIncoming(body_value, if_block);
+        node->addIncoming(else_value, else_block);
+        return node;
+    }
+
+    return nullptr;
 }
 
-llvm::Value* ResolvedOmg::codegen(Context&  /*ctx*/) {
+llvm::Value* ResolvedOmg::codegen(Context& /*ctx*/) {
     std::cerr << "NOT IMPLEMENTED yet (OmgAST)\n";
     return nullptr;
 }
@@ -193,10 +214,14 @@ llvm::Value* ResolvedPrimitive::codegen(Context& ctx) {
 }
 
 llvm::Value* ResolvedVariable::codegen(Context& ctx) {
-    llvm::Value* value = ctx.named_values[declaration->name];
+    llvm::Value* value = ctx.named_values[declaration];
     if (!value) {
         std::cout << "Unknown variable \"" + declaration->name + "\"" + '\n';
         return nullptr;
+    }
+
+    if (!dynamic_cast<ResolvedParamDeclare*>(declaration)) {
+        return ctx.load_value(value, ctx.llvm_types.at(type));
     }
     return value;
 }

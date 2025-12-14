@@ -21,3 +21,10 @@ Type Context::get_type(const std::string& type_identifier) {
     }
     return result->second;
 }
+
+llvm::AllocaInst* Context::allocate_stack_variable(std::string_view name, llvm::Type* type) {
+    llvm::IRBuilder<> tmpBuilder(context);
+    tmpBuilder.SetInsertPoint(variable_insert_point);
+
+    return tmpBuilder.CreateAlloca(type, nullptr, name);
+}

@@ -61,9 +61,10 @@ public:
 class VarDeclareAST : public DeclAST {
 public:
     std::unique_ptr<ExprAST> expr;
+    bool is_mutable;
 
-    VarDeclareAST(SourceLocation loc, std::string name, Type type, std::unique_ptr<ExprAST> expr)
-        : DeclAST(loc, std::move(name), std::move(type)), expr{std::move(expr)} {
+    VarDeclareAST(SourceLocation loc, std::string name, Type type, std::unique_ptr<ExprAST> expr, bool is_mutable)
+        : DeclAST(loc, std::move(name), std::move(type)), expr{std::move(expr)}, is_mutable{is_mutable} {
     }
 
     std::string stringify(size_t indent_level = 0) override;

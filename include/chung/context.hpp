@@ -14,15 +14,26 @@
 
 #include "chung/type.hpp"
 
+class ResolvedDecl;
+struct Context;
+#include "chung/resolved_ast.hpp"
+
 struct Context {
     llvm::LLVMContext context;
     llvm::IRBuilder<> builder;
+    llvm::Instruction* variable_insert_point; // alloca
     std::unique_ptr<llvm::Module> module;
-    std::map<std::string, llvm::Value*> named_values;
+    std::map<ResolvedDecl*, llvm::Value*> named_values;
     std::map<std::string, Type> declared_types;
     std::map<std::reference_wrapper<const Type>, llvm::Type*, std::less<const Type>> llvm_types; // NOLINT
 
     Context();
 
     Type get_type(const std::string& type_identifier);
+
+    llvm::AllocaInst* allocate_stack_variable(std::string_view name, llvm::Type* type);
+
+    llvm::Value* load_value(llvm::Value* value, llvm::Type* type) {
+        return builder.CreateLoad(type, value);
+    }
 };

@@ -78,6 +78,8 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                         type = TokenType::FUNC;
                     } else if (identifier == "let") {
                         type = TokenType::LET;
+                    } else if (identifier == "mut") {
+                        type = TokenType::MUT;
                     } else if (identifier == "if") {
                         type = TokenType::IF;
                     } else if (identifier == "else") {

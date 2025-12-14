@@ -85,7 +85,7 @@ void Parser::synchronize() {
             return;
         } else {
             Token next = next_token();
-            if (next.type == TokenType::LET) {
+            if (next.type == TokenType::LET || next.type == TokenType::MUT) {
                 // std::cout << "Done synchronizing\n";
                 return;
             }
@@ -214,6 +214,7 @@ std::unique_ptr<BlockAST> Parser::parse_block() {
 
         switch (current_token().type) {
             case TokenType::LET:
+            case TokenType::MUT:
             case TokenType::RETURN:
             case TokenType::FUNC:
                 statements.push_back(parse_statement());
@@ -231,7 +232,8 @@ std::unique_ptr<BlockAST> Parser::parse_block() {
                     // No semicolon, yes } -> ending return block;
                     return_value = std::move(dynamic_cast<ExprStmtAST*>(expr_stmt.get())->expr); // Yikes
                     break;
-                } else if (dynamic_cast<IfExprAST*>(expr)) { // Dynamic cast to see which expressions don't need semicolons (e.g if expr)
+                } else if (dynamic_cast<IfExprAST*>(
+                               expr)) { // Dynamic cast to see which expressions don't need semicolons (e.g if expr)
                     statements.push_back(std::move(expr_stmt));
                 } else {
                     throw push_exception("Expected ';' after expression", current_token());
@@ -247,8 +249,9 @@ std::unique_ptr<BlockAST> Parser::parse_block() {
 }
 
 std::unique_ptr<StmtAST> Parser::parse_var_declaration() {
-    // Eat 'let'
-    eat_token();
+    // Eat 'let' or 'mut'
+    Token token = eat_token();
+    bool is_mutable = token.type == TokenType::MUT;
 
     // Eat identifier
     Token identifier = current_token();
@@ -257,22 +260,30 @@ std::unique_ptr<StmtAST> Parser::parse_var_declaration() {
     }
     eat_token();
 
-    std::unique_ptr<ExprAST> expr = std::make_unique<PrimitiveAST>(
-        identifier.loc, TokenType::INVALID); // OK I'm not sure if this token should be used for SourceLocation
+    Type type = Type::none;
+
+    if (current_token().type == TokenType::COLON) {
+        // Eat ':'
+        eat_token();
+        Token type_name = current_token();
+        match_simple(TokenType::IDENTIFIER, "Expected type after ':' in variable declaration");
+        type = ctx.get_type(type_name.text);
+    }
+
+    std::unique_ptr<ExprAST> expr = nullptr;
     if (current_token().type == TokenType::ASSIGN) {
         // Eat '='
         eat_token();
 
         expr = parse_expression();
-    }
-    if (!expr) {
-        return nullptr;
+        if (!expr) {
+            return nullptr;
+        }
     }
 
     match_simple(TokenType::SEMICOLON, "Expected ';' after identifier");
 
-    // FOR NOW
-    return std::make_unique<VarDeclareAST>(identifier.loc, identifier.text, Type::none, std::move(expr));
+    return std::make_unique<VarDeclareAST>(identifier.loc, identifier.text, type, std::move(expr), is_mutable);
 }
 
 std::unique_ptr<StmtAST> Parser::parse_function() {
@@ -406,6 +417,7 @@ std::unique_ptr<StmtAST> Parser::parse_statement() {
         if (is_keyword(token.type)) {
             switch (token.type) {
                 case TokenType::LET:
+                case TokenType::MUT:
                     return parse_var_declaration();
                 case TokenType::FUNC:
                     return parse_function();

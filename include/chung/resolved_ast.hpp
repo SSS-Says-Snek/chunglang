@@ -73,9 +73,10 @@ public:
 class ResolvedVarDeclare : public ResolvedDecl {
 public:
     std::unique_ptr<ResolvedExpr> expr;
+    bool is_mutable;
 
-    ResolvedVarDeclare(SourceLocation loc, std::string name, Type type, std::unique_ptr<ResolvedExpr> expr)
-        : ResolvedDecl(loc, std::move(name), std::move(type)), expr{std::move(expr)} {
+    ResolvedVarDeclare(SourceLocation loc, std::string name, Type type, std::unique_ptr<ResolvedExpr> expr, bool is_mutable)
+        : ResolvedDecl(loc, std::move(name), std::move(type)), expr{std::move(expr)}, is_mutable{is_mutable} {
     }
 
     // std::string stringify(size_t indent_level = 0) override;

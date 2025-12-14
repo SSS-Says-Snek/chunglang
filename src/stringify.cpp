@@ -163,6 +163,7 @@ std::string FunctionAST::stringify(size_t indent_level) {
 
     for (size_t i = 0; i < parameters.size(); i++) {
         string += indent_string(indent_level + 2, "Parameter " + std::to_string(i + 1) + ": " + parameters[i].name);
+        string += indent_string(indent_level + 3, "Type: " + parameters[i].type.name);
     }
     if (parameters.size() == 0) {
         string += indent_string(indent_level + 2, "No Parameters");
@@ -179,7 +180,15 @@ std::string VarDeclareAST::stringify(size_t indent_level) {
     std::string string{indent_string(indent_level, "Variable Declaration:")};
 
     string += indent_string(indent_level + 1, "Name: " + name);
-    string += indent_string(indent_level + 1, "Value:") + expr->stringify(indent_level + 2);
+    string += indent_string(indent_level + 1, "Type: " + type.name);
+    if (is_mutable) {
+        string += indent_string(indent_level + 1, "Mutable: True");
+    } else {
+        string += indent_string(indent_level + 1, "Mutable: False");
+    }
+    if (expr) {
+        string += indent_string(indent_level + 1, "Value:") + expr->stringify(indent_level + 2);
+    }
 
     return string;
 }
