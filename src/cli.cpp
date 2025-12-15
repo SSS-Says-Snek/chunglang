@@ -112,7 +112,7 @@ int run_parse(std::vector<std::string>& args) {
         std::cout << "Analyzing and Type Checking " << file_path << '\n';
 
         Sema sema{std::move(statements), source_lines};
-        auto resolved_ast = sema.resolve();
+        const auto& [resolved_std_ast, resolved_ast] = sema.resolve();
         auto sema_exceptions = sema.get_exceptions();
 
         if (!sema_exceptions.empty()) {
@@ -125,7 +125,7 @@ int run_parse(std::vector<std::string>& args) {
             std::cout << ANSI_GREEN << "Successfully analyzed with no exceptions!\n\n" << ANSI_RESET;
         }
 
-        for (auto& resolved_statement : resolved_ast) {
+        for (const auto& resolved_statement : resolved_ast) {
             llvm::Value* statement_value = resolved_statement->codegen(ctx);
         }
 

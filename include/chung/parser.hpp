@@ -93,6 +93,7 @@ public:
     std::unique_ptr<ExprAST> parse_if_expr();
 
     // Heheheha
+    std::unique_ptr<ExprAST> parse_expression_or_assignment();
     std::unique_ptr<ExprAST> parse_expression();
     std::unique_ptr<StmtAST> parse_statement();
 

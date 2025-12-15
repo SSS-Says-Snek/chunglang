@@ -51,10 +51,10 @@ public:
     }
 
     // std::string stringify(size_t indent_level = 0) override;
-    llvm::Value* codegen(Context& /*ctx*/) override {
-        llvm_unreachable("This should NOT be used");
-    }
     llvm::Value* codegen(Context& ctx, bool create_ret_instructions);
+    llvm::Value* codegen(Context& ctx) override {
+        return codegen(ctx, false);
+    }
 };
 
 class ResolvedDecl : public ResolvedStmt {
@@ -217,5 +217,17 @@ public:
     }
 
     // std::string stringify(size_t indent_level = 0) override;
+    llvm::Value* codegen(Context& ctx) override;
+};
+
+class ResolvedAssignment : public ResolvedStmt {
+public:
+    std::unique_ptr<ResolvedVariable> variable;
+    std::unique_ptr<ResolvedExpr> expr;
+
+    ResolvedAssignment(SourceLocation loc, std::unique_ptr<ResolvedVariable> variable, std::unique_ptr<ResolvedExpr> expr)
+        : ResolvedStmt(loc), variable{std::move(variable)}, expr{std::move(expr)} {
+    }
+
     llvm::Value* codegen(Context& ctx) override;
 };

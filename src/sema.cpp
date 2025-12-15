@@ -18,8 +18,8 @@ SemaException::SemaException(std::string exception_message, SourceLocation loc, 
 
 std::string SemaException::write(const std::vector<std::string>& source_lines) {
     std::string string{ANSI_RED};
-    string += "SemaException at line " + std::to_string(loc.line) + " column " +
-              std::to_string(loc.column) + ":\n" + ANSI_RESET;
+    string += "SemaException at line " + std::to_string(loc.line) + " column " + std::to_string(loc.column) + ":\n" +
+              ANSI_RESET;
     std::string carets;
 
     for (size_t i = 0; i <= source_line.length(); i++) {
@@ -104,10 +104,15 @@ std::unique_ptr<ResolvedStmt> Sema::resolve_stmt(const StmtAST& stmt) {
 
     if (const auto* var_decl = dynamic_cast<const VarDeclareAST*>(&stmt)) {
         auto resolved_var_decl = resolve_var_decl(*var_decl);
-        if (!resolved_var_decl || !add_declaration(*dynamic_cast<ResolvedDecl*>(resolved_var_decl.get()))) { // Holy crap
+        if (!resolved_var_decl ||
+            !add_declaration(*dynamic_cast<ResolvedDecl*>(resolved_var_decl.get()))) { // Holy crap
             return nullptr;
         }
         return resolved_var_decl;
+    }
+
+    if (const auto* assignment = dynamic_cast<const AssignmentAST*>(&stmt)) {
+        return resolve_assignment(*assignment);
     }
 
     // Every stmt should be covered already; if not, implementation error
@@ -133,6 +138,10 @@ std::unique_ptr<ResolvedExpr> Sema::resolve_expr(const ExprAST& expr) {
 
     if (const auto* call = dynamic_cast<const CallAST*>(&expr)) {
         return resolve_call(*call);
+    }
+
+    if (const auto* block = dynamic_cast<const BlockAST*>(&expr)) {
+        return resolve_block(*block);
     }
 
     // Every expr should be covered already; if not, implementation error
@@ -172,8 +181,8 @@ std::unique_ptr<ResolvedIfExpr> Sema::resolve_if_expr(const IfExprAST& if_expr) 
         }
     }
 
-    return std::make_unique<ResolvedIfExpr>(if_expr.loc, std::move(resolved_body->type), std::move(condition), std::move(resolved_body),
-                                            std::move(resolved_else_body));
+    return std::make_unique<ResolvedIfExpr>(if_expr.loc, std::move(resolved_body->type), std::move(condition),
+                                            std::move(resolved_body), std::move(resolved_else_body));
 }
 
 std::unique_ptr<ResolvedBinaryExpr> Sema::resolve_binary_expr(const BinaryExprAST& binary_expr) {
@@ -227,11 +236,36 @@ std::unique_ptr<ResolvedVariable> Sema::resolve_variable(const VariableAST& vari
     return std::make_unique<ResolvedVariable>(variable.loc, resolved_var_decl);
 }
 
+std::unique_ptr<ResolvedAssignment> Sema::resolve_assignment(const AssignmentAST& assignment) {
+    HANDLE_MAKE_VAR(resolved_variable, resolve_variable(*assignment.variable))
+    HANDLE_MAKE_VAR(resolved_expr, resolve_expr(*assignment.expr))
+
+    const auto* var = dynamic_cast<const ResolvedVarDeclare*>(resolved_variable->declaration);
+    if (!var) {
+        // Currently will only be ResolvedParamDeclare
+        push_exception("Parameter '" + resolved_variable->declaration->name + "' is immutable and cannot be mutated",
+                       assignment.loc);
+        return nullptr;
+    }
+    if (var->type != resolved_expr->type) {
+        push_exception("Expression type does not match variable type", assignment.loc);
+        return nullptr;
+    }
+
+    if (!var->is_mutable) {
+        push_exception("Variable '" + var->name + "' is immutable and cannot be mutated", assignment.loc);
+        return nullptr;
+    }
+
+    return std::make_unique<ResolvedAssignment>(assignment.loc, std::move(resolved_variable), std::move(resolved_expr));
+}
+
 std::unique_ptr<ResolvedFunction> Sema::resolve_function(const FunctionAST& function) {
     std::optional<Type> return_type = resolve_type(function.type);
 
     if (!return_type) {
-        push_exception("Invalid return type '" + function.type.name + "' for function '" + function.name + "'", function.loc);
+        push_exception("Invalid return type '" + function.type.name + "' for function '" + function.name + "'",
+                       function.loc);
         return nullptr;
     }
 
@@ -297,10 +331,12 @@ std::unique_ptr<ResolvedVarDeclare> Sema::resolve_var_decl(const VarDeclareAST& 
     }
 
     if (resolved_expr && resolved_expr->type != resolved_type) {
-        push_exception("Variable '" + var_decl.name + "' type declaration does not match initializer expression type", var_decl.loc);
+        push_exception("Variable '" + var_decl.name + "' type declaration does not match initializer expression type",
+                       var_decl.loc);
     }
 
-    return std::make_unique<ResolvedVarDeclare>(var_decl.loc, var_decl.name, *resolved_type, std::move(resolved_expr), var_decl.is_mutable);
+    return std::make_unique<ResolvedVarDeclare>(var_decl.loc, var_decl.name, *resolved_type, std::move(resolved_expr),
+                                                var_decl.is_mutable);
 }
 
 std::unique_ptr<ResolvedCall> Sema::resolve_call(const CallAST& call) {
@@ -322,7 +358,9 @@ std::unique_ptr<ResolvedCall> Sema::resolve_call(const CallAST& call) {
 
         HANDLE_MAKE_VAR(resolved_expr, resolve_expr(*argument))
         if (resolved_expr->type.ty != resolved_function->parameters[i]->type.ty) {
-            push_exception("Argument and parameter types do not match; expected " + resolved_function->parameters[i]->type.name + ", found " + resolved_expr->type.name, call.loc);
+            push_exception("Argument and parameter types do not match; expected " +
+                               resolved_function->parameters[i]->type.name + ", found " + resolved_expr->type.name,
+                           call.loc);
             return nullptr;
         }
 
@@ -365,17 +403,32 @@ std::optional<Type> Sema::resolve_type(Type parsed_type) {
     return parsed_type;
 }
 
-std::unique_ptr<ResolvedFunction> generate_print() {
-    auto print_loc = SourceLocation{0, 0, 0};
-    std::vector<std::unique_ptr<ResolvedParamDeclare>> params;
-    auto n = std::make_unique<ResolvedParamDeclare>(print_loc, "n", Type::int64);
-    params.push_back(std::move(n));
+void Sema::generate_std_function(std::vector<std::unique_ptr<ResolvedStmt>>& std_resolved_ast, const std::string& name,
+                            const std::vector<std::pair<std::string, Type>>& params, const Type& return_type) {
+    auto loc = SourceLocation{0, 0, 0};
+    std::vector<std::unique_ptr<ResolvedParamDeclare>> resolved_params;
+    for (const auto& [name, type] : params) {
+        auto param = std::make_unique<ResolvedParamDeclare>(loc, name, type);
+        resolved_params.push_back(std::move(param));
+    }
 
-    auto block = std::make_unique<ResolvedBlock>(print_loc, std::vector<std::unique_ptr<ResolvedStmt>>(), nullptr);
-    return std::make_unique<ResolvedFunction>(print_loc, "print", std::move(params), Type::void_, std::move(block));
+    auto block = std::make_unique<ResolvedBlock>(loc, std::vector<std::unique_ptr<ResolvedStmt>>(), nullptr);
+    auto* func = std_resolved_ast
+                     .emplace_back(std::make_unique<ResolvedFunction>(loc, name, std::move(resolved_params),
+                                                                      return_type, std::move(block)))
+                     .get();
+    add_declaration(*dynamic_cast<ResolvedDecl*>(func));
 }
 
-std::vector<std::unique_ptr<ResolvedStmt>> Sema::resolve() {
+std::vector<std::unique_ptr<ResolvedStmt>> Sema::fill_std_functions() {
+    std::vector<std::unique_ptr<ResolvedStmt>> std_resolved_ast;
+    generate_std_function(std_resolved_ast, "print", {{"n", Type::int64}}, Type::void_);
+    generate_std_function(std_resolved_ast, "print_char", {{"n", Type::int64}}, Type::void_);
+
+    return std_resolved_ast;
+}
+
+std::pair<std::vector<std::unique_ptr<ResolvedStmt>>, std::vector<std::unique_ptr<ResolvedStmt>>> Sema::resolve() {
     std::vector<std::unique_ptr<ResolvedStmt>> resolved_ast;
 
     // Will emplace and pop as needed
@@ -383,9 +436,7 @@ std::vector<std::unique_ptr<ResolvedStmt>> Sema::resolve() {
 
     std::vector<const FunctionAST*> unresolved_functions;
 
-    // Add print decl rq manually
-    auto* e = resolved_ast.emplace_back(generate_print()).get();
-    add_declaration(*dynamic_cast<ResolvedDecl*>(e));
+    auto std_resolved_ast = fill_std_functions();
 
     // First pass: just add the symbols of the global declarations (for stuff like forward referencing)
     bool error = false;
@@ -413,7 +464,7 @@ std::vector<std::unique_ptr<ResolvedStmt>> Sema::resolve() {
 
     // Second pass
 
-    for (size_t i = 1; i < resolved_ast.size(); i++) {
+    for (size_t i = 0; i < resolved_ast.size(); i++) {
         std::unique_ptr<ResolvedStmt>& stmt = resolved_ast[i];
         if (auto* function = dynamic_cast<ResolvedFunction*>(stmt.get())) {
             current_function = function;
@@ -425,14 +476,17 @@ std::vector<std::unique_ptr<ResolvedStmt>> Sema::resolve() {
             }
 
             auto resolved_body = resolve_block( // ast[i - 1] because the first resolved_ast is `print`
-                *dynamic_cast<FunctionAST*>(ast[i - 1].get())->body); // This is the worst thing I've ever written
+                *dynamic_cast<FunctionAST*>(ast[i].get())->body); // This is the worst thing I've ever written
             if (!resolved_body) {
                 error = true;
                 continue;
             }
 
             if (resolved_body->return_value && resolved_body->return_value->type != function->type) {
-                push_exception("Function '" + function->name + "' body's type of " + resolved_body->return_value->type.name + " does not match return type of " + function->type.name, resolved_body->loc);
+                push_exception("Function '" + function->name + "' body's type of " +
+                                   resolved_body->return_value->type.name + " does not match return type of " +
+                                   function->type.name,
+                               resolved_body->loc);
             }
 
             current_function->body = std::move(resolved_body);
@@ -443,7 +497,7 @@ std::vector<std::unique_ptr<ResolvedStmt>> Sema::resolve() {
         return {};
     }
 
-    return resolved_ast;
+    return std::make_pair(std::move(std_resolved_ast), std::move(resolved_ast));
 }
 
 // std::unique_ptr<ResolvedStmt> StmtAST::resolve() {

@@ -65,9 +65,8 @@ std::string stringify_symbol(const TokenType& symbol, bool verbose) {
 
 std::string stringify_keyword(const TokenType& keyword) {
     static const std::map<TokenType, std::string> token_to_string = {
-        {TokenType::FUNC, "Func"}, {TokenType::LET, "Let"},     {TokenType::IF, "If"},
-        {TokenType::ELSE, "Else"}, {TokenType::__OMG, "__OMG"},
-    };
+        {TokenType::FUNC, "Func"}, {TokenType::LET, "Let"},     {TokenType::MUT, "Mut"},    {TokenType::IF, "If"},
+        {TokenType::ELSE, "Else"}, {TokenType::__OMG, "__OMG"}, {TokenType::WHILE, "While"}};
     return token_to_string.at(keyword);
 }
 
@@ -228,6 +227,15 @@ std::string BinaryExprAST::stringify(size_t indent_level) {
     // 2 new indentation level: 1 for "Binary Operation" and another for the side
     string += indent_string(indent_level + 1, "Left Hand:") + lhs->stringify(indent_level + 2);
     string += indent_string(indent_level + 1, "Right Hand:") + rhs->stringify(indent_level + 2);
+
+    return string;
+}
+
+std::string AssignmentAST::stringify(size_t indent_level) {
+    std::string string{indent_string(indent_level, "Assignment:")};
+
+    string += indent_string(indent_level + 1, "Variable: ") + variable->stringify(indent_level + 2);
+    string += indent_string(indent_level + 1, "Expression: ") + expr->stringify(indent_level + 2);
 
     return string;
 }

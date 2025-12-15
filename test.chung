@@ -1,24 +1,63 @@
-func stuff(param: int64) {
-    print(param);
-}
-
 func add_one(param: int64) -> int64 {
-    let goon = 64;
+    mut goon: int64 = 64;
+    goon = param * goon;
     if (goon > 5) {
-        param + 1
+        goon
     } else {
         param - 1
     }
 }
 
+func fib(n: int64) -> int64 {
+    if (n == 0) {
+        0
+    } else {
+        if (n == 1) {
+            1 
+        } else {
+            if (n == 2) {
+                1
+            } else {
+                fib(n - 1) + fib(n - 2)
+            }
+        }
+    }
+}
+
 func aa(param: int64) {
     if (param > 10) {
-        stuff(param);
+        print(param);
     } else {
         print(add_one(param));
     }
 }
 
+func test_if_exprs(param: int64) {
+    let goon = if (param > 3) {
+        3
+    } else {
+        30000
+    };
+
+    print({
+        let goon2 = goon + 1;
+        goon2
+    });
+}
+
+func gurt() -> int64 {
+    if (2 > 1) {
+        0
+    } else {
+        1
+    }
+    
+    676767
+}
+
 func main() {
     aa(6);
+    test_if_exprs(2);
+    print(fib(10));
+    print(gurt());
 }

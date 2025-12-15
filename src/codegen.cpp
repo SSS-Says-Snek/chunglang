@@ -50,16 +50,15 @@ llvm::Value* ResolvedFunction::codegen(Context& ctx) {
         parameter_types.push_back(ctx.llvm_types.at(parameter->type));
     }
 
-    // FOR NOW RET VOID
     llvm::FunctionType* function_type = llvm::FunctionType::get(ctx.llvm_types.at(type), parameter_types, false);
     llvm::Function* function =
         llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, name, ctx.module.get());
 
 
-    // Basic Block
     llvm::BasicBlock* function_block = llvm::BasicBlock::Create(ctx.context, "entry", function);
     ctx.builder.SetInsertPoint(function_block);
 
+    // Variable insert point so that declarations can get put to the function entry block
     llvm::Value* undef = llvm::UndefValue::get(ctx.builder.getInt32Ty());
     ctx.variable_insert_point = new llvm::BitCastInst(undef, undef->getType(), "alloca.placeholder", function_block);
 
@@ -118,6 +117,9 @@ llvm::Value* ResolvedIfExpr::codegen(Context& ctx) {
         ctx.builder.SetInsertPoint(else_block);
         else_value = else_body->codegen(ctx, false);
         ctx.builder.CreateBr(cont_block);
+
+        // REQUIRED to get up to date information about BasicBlocks!!! (e.g nested if-exprs)
+        else_block = ctx.builder.GetInsertBlock();
     }
 
     cont_block->insertInto(current_function);
@@ -161,6 +163,8 @@ llvm::Value* ResolvedBinaryExpr::codegen(Context& ctx) {
         case TokenType::GREATER_THAN:
             return ctx.builder.CreateICmpSGT(
                 lhs_code, rhs_code); // TODO: ICmpSGT Is only for I-nteger Cmp-arison with S-igned G-reater T-han
+        case TokenType::EQUAL:
+            return ctx.builder.CreateICmpEQ(lhs_code, rhs_code);
         default:
             std::cerr << "NOT IMPLEMENTED YET (BinaryExprAST)\n";
     }
@@ -224,4 +228,8 @@ llvm::Value* ResolvedVariable::codegen(Context& ctx) {
         return ctx.load_value(value, ctx.llvm_types.at(type));
     }
     return value;
+}
+
+llvm::Value* ResolvedAssignment::codegen(Context& ctx) {
+    return ctx.builder.CreateStore(expr->codegen(ctx), ctx.named_values[variable->declaration]);
 }

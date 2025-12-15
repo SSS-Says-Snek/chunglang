@@ -23,6 +23,7 @@ public:
 class Sema {
 private:
     std::vector<SemaException> exceptions;
+
 public:
     std::vector<std::unique_ptr<StmtAST>> ast;
     const std::vector<std::string>& source_lines;
@@ -32,11 +33,11 @@ public:
 
     ResolvedFunction* current_function{nullptr};
 
-    explicit Sema(std::vector<std::unique_ptr<StmtAST>> ast, const std::vector<std::string>& source_lines) : ast{std::move(ast)}, source_lines{source_lines} {
+    explicit Sema(std::vector<std::unique_ptr<StmtAST>> ast, const std::vector<std::string>& source_lines)
+        : ast{std::move(ast)}, source_lines{source_lines} {
     }
 
-    std::vector<std::unique_ptr<ResolvedStmt>> resolve();
-
+    std::pair<std::vector<std::unique_ptr<ResolvedStmt>>, std::vector<std::unique_ptr<ResolvedStmt>>> resolve();
     std::unique_ptr<ResolvedStmt> resolve_stmt(const StmtAST& stmt);
     std::unique_ptr<ResolvedCall> resolve_call(const CallAST& call);
     std::unique_ptr<ResolvedBinaryExpr> resolve_binop(const BinaryExprAST& binop);
@@ -49,6 +50,7 @@ public:
     std::unique_ptr<ResolvedIfExpr> resolve_if_expr(const IfExprAST& if_expr);
     std::unique_ptr<ResolvedBinaryExpr> resolve_binary_expr(const BinaryExprAST& binary_expr);
     std::unique_ptr<ResolvedVariable> resolve_variable(const VariableAST& variable);
+    std::unique_ptr<ResolvedAssignment> resolve_assignment(const AssignmentAST& assignment);
     static std::unique_ptr<ResolvedOmg> resolve_omg(const OmgAST& block);
     static std::unique_ptr<ResolvedPrimitive> resolve_primitive(const PrimitiveAST& primitive);
     static std::optional<Type> resolve_type(Type parsed_type);
@@ -56,6 +58,9 @@ public:
     std::pair<ResolvedDecl*, int> lookup_declaration(const std::string& name);
     bool add_declaration(ResolvedDecl& decl);
 
+    void generate_std_function(std::vector<std::unique_ptr<ResolvedStmt>>& std_resolved_ast, const std::string& name,
+                          const std::vector<std::pair<std::string, Type>>& params, const Type& return_type);
+    std::vector<std::unique_ptr<ResolvedStmt>> fill_std_functions();
     void add_scope() {
         scopes.emplace_back();
     }

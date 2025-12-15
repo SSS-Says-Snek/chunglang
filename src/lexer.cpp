@@ -84,6 +84,8 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                         type = TokenType::IF;
                     } else if (identifier == "else") {
                         type = TokenType::ELSE;
+                    } else if (identifier == "while") {
+                        type = TokenType::WHILE;
                     } else if (identifier == "__omg") {
                         type = TokenType::__OMG;
                     } else {

@@ -46,6 +46,7 @@ enum class TokenType : uint8_t {
     RETURN,
     IF,
     ELSE,
+    WHILE,
     __OMG,
 
     // Primitives

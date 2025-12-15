@@ -192,6 +192,8 @@ std::unique_ptr<ExprAST> Parser::parse_primary() {
     } else if (is_symbol(token.type)) {
         if (token.type == TokenType::OPEN_PARENTHESES) {
             return parse_parentheses();
+        } else if (token.type == TokenType::OPEN_BRACES) {
+            return parse_block();
         }
         return nullptr;
     } else {
@@ -222,6 +224,25 @@ std::unique_ptr<BlockAST> Parser::parse_block() {
             default: {
                 auto expr_stmt = parse_expression_statement(false); // Will handle later
                 ExprAST* expr = (dynamic_cast<ExprStmtAST*>(expr_stmt.get())->expr).get();
+                if (current_token().type == TokenType::ASSIGN) {
+                    auto* var_decl = dynamic_cast<VariableAST*>(expr);
+                    if (!var_decl) {
+                        throw push_exception("Expected variable expression on the LHS of the assignment", current_token());
+                    }
+
+                    std::ignore = expr_stmt.release();
+                    SourceLocation loc = next_token().loc;
+
+                    // Eat '='
+                    eat_token();
+
+                    auto rhs_expr = parse_expression();
+                    statements.push_back(std::make_unique<AssignmentAST>(loc, std::unique_ptr<VariableAST>(var_decl), std::move(rhs_expr)));
+
+                    // Eat ';'
+                    match_simple(TokenType::SEMICOLON, "Expected ';' after assignment");
+                    continue;
+                }
 
                 TokenType token = current_token().type;
                 if (token == TokenType::SEMICOLON) {
@@ -367,7 +388,17 @@ std::unique_ptr<ExprAST> Parser::parse_if_expr() {
     // Eat 'else'
     eat_token();
 
-    std::unique_ptr<BlockAST> else_body = parse_block();
+    std::unique_ptr<BlockAST> else_body;
+    // Else-if
+    if (current_token().type == TokenType::IF) {
+        auto else_if = parse_if_expr();
+        SourceLocation loc = else_if->loc;
+        std::vector<std::unique_ptr<StmtAST>> stmts;
+        else_body = std::make_unique<BlockAST>(loc, std::move(stmts), std::move(else_if));
+    } else {
+        else_body = parse_block();
+    }
+
     return std::make_unique<IfExprAST>(loc, std::move(condition), std::move(body), std::move(else_body));
 }
 
@@ -425,7 +456,7 @@ std::unique_ptr<StmtAST> Parser::parse_statement() {
                     return parse_omg();
                 default: {
                     std::cout << "You failed me.\n";
-                    return nullptr;
+                    throw push_exception("You've failed me", current_token());
                 }
             }
         } else {
