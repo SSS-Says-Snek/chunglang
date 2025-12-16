@@ -1,0 +1,46 @@
+func print_density(density: float64) {
+    if (density > 8.0) {
+        print_char(32);
+    } else if (density > 4.0) {
+        print_char(46);
+    } else if (density > 2.0) {
+        print_char(43);
+    } else {
+        print_char(42);
+    }
+}
+
+func mandel_converger(real: float64, imag: float64, iters: float64, creal: float64, cimag: float64) -> float64 {
+    if (iters > 255.0) {
+        iters
+    } else if (real*real + imag*imag > 4.0) {
+        iters
+    } else {
+        mandel_converger(real*real - imag*imag + creal, 2.0*real*imag + cimag, iters + 1.0, creal, cimag)
+    }
+}
+
+func mandel_converge(real: float64, imag: float64) -> float64 {
+    mandel_converger(real, imag, 0.0, real, imag)
+}
+
+func mandel_helper(xmin: float64, xmax: float64, xstep: float64, ymin: float64, ymax: float64, ystep: float64) {
+    mut y = ymin;
+    while (y < ymax) {
+        mut x = xmin;
+        while (x < xmax) {
+            print_density(mandel_converge(x, y));
+            x = x + xstep;
+        }
+        print_char(10);
+        y = y + ystep;
+    }
+}
+
+func mandel(realstart: float64, imagstart: float64, realmag: float64, imagmag: float64) {
+    mandel_helper(realstart, realstart + realmag * 78.0, realmag, imagstart, imagstart + imagmag * 40.0, imagmag);
+}
+
+func main() {
+    mandel(0.0 - 2.3, 0.0 - 1.3, 0.05, 0.07);
+}

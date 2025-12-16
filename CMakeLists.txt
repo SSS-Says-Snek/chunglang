@@ -35,6 +35,7 @@ add_executable(chung
     src/stringify.cpp
     src/token.cpp
     src/type.cpp
+    src/sema.cpp
 )
 target_include_directories(chung PUBLIC include)
 target_compile_options(chung PRIVATE -Wall -Wextra -Wpedantic)

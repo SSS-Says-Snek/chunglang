@@ -42,9 +42,11 @@ enum class TokenType : uint8_t {
 
     FUNC,
     LET,
+    MUT,
     RETURN,
     IF,
     ELSE,
+    WHILE,
     __OMG,
 
     // Primitives
