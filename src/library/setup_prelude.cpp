@@ -1,25 +1,38 @@
 #include "chung/library/setup_prelude.hpp"
 
+void setup_function(Context& ctx, const std::string& name, const std::vector<std::pair<std::string, llvm::Type*>>& params,
+                    llvm::Type* return_type) {
+    std::vector<llvm::Type*> params_type;
+    params_type.reserve(params.size());
+    for (const auto& param : params) {
+        params_type.push_back(param.second);
+    }
+    llvm::FunctionType* func_type = llvm::FunctionType::get(return_type, params_type, false);
+    llvm::Function* func =
+        llvm::Function::Create(func_type, llvm::Function::ExternalLinkage, name, ctx.module.get());
+
+    size_t i = 0;
+    for (auto& arg : func->args()) {
+        arg.setName(params[i].first);
+        i++;
+    }
+}
+
 void setup_prelude(Context& ctx) {
-    // print
-    std::vector<llvm::Type*> print_params{llvm::Type::getInt64Ty(ctx.context)};
-    llvm::Type* print_return_type = llvm::Type::getVoidTy(ctx.context);
-    llvm::FunctionType* print_func_type = llvm::FunctionType::get(print_return_type, print_params, false);
-    llvm::Function* print_func =
-        llvm::Function::Create(print_func_type, llvm::Function::ExternalLinkage, "print", ctx.module.get());
+    llvm::Type* int64_type = llvm::Type::getInt64Ty(ctx.context);
+    llvm::Type* void_type = llvm::Type::getVoidTy(ctx.context);
 
-    for (auto& arg : print_func->args()) {
-        arg.setName("value");
-    }
+    setup_function(ctx, "print", {{"value", llvm::Type::getInt64Ty(ctx.context)}}, llvm::Type::getVoidTy(ctx.context));
+    setup_function(ctx, "print_char", {{"value", llvm::Type::getInt64Ty(ctx.context)}}, llvm::Type::getVoidTy(ctx.context));
+    setup_function(ctx, "print_float_64", {{"value", llvm::Type::getDoubleTy(ctx.context)}}, llvm::Type::getVoidTy(ctx.context));
 
-    // print_char
-    std::vector<llvm::Type*> print_char_params{llvm::Type::getInt64Ty(ctx.context)};
-    llvm::Type* print_char_return_type = llvm::Type::getVoidTy(ctx.context);
-    llvm::FunctionType* print_char_func_type = llvm::FunctionType::get(print_return_type, print_params, false);
-    llvm::Function* print_char_func =
-        llvm::Function::Create(print_func_type, llvm::Function::ExternalLinkage, "print_char", ctx.module.get());
-
-    for (auto& arg : print_char_func->args()) {
-        arg.setName("value");
-    }
+    // Raylib
+    setup_function(ctx, "init_window", {{"width", int64_type}, {"height", int64_type}}, void_type);
+    setup_function(ctx, "set_target_fps", {{"fps", int64_type}}, void_type);
+    setup_function(ctx, "window_should_close", {}, int64_type);
+    setup_function(ctx, "begin_drawing", {}, void_type);
+    setup_function(ctx, "clear_background", {}, void_type);
+    setup_function(ctx, "draw_circle", {{"x", int64_type}, {"y", int64_type}, {"radius", int64_type}}, void_type);
+    setup_function(ctx, "end_drawing", {}, void_type);
+    setup_function(ctx, "close_window", {}, void_type);
 }

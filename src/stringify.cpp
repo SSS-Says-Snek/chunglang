@@ -154,6 +154,17 @@ std::string IfExprAST::stringify(size_t indent_level) {
     return string;
 }
 
+std::string WhileAST::stringify(size_t indent_level) {
+    std::string string{indent_string(indent_level, "While Loop:")};
+
+    string += indent_string(indent_level + 1, "Condition:");
+    string += condition->stringify(indent_level + 2);
+    string += indent_string(indent_level + 1, "Body:");
+    string += body->stringify(indent_level + 2);
+
+    return string;
+}
+
 std::string FunctionAST::stringify(size_t indent_level) {
     std::string string{indent_string(indent_level, "Function Declaration:")};
 

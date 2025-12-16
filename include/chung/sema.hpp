@@ -51,6 +51,8 @@ public:
     std::unique_ptr<ResolvedBinaryExpr> resolve_binary_expr(const BinaryExprAST& binary_expr);
     std::unique_ptr<ResolvedVariable> resolve_variable(const VariableAST& variable);
     std::unique_ptr<ResolvedAssignment> resolve_assignment(const AssignmentAST& assignment);
+    std::unique_ptr<ResolvedWhile> resolve_while(const WhileAST& while_loop);
+
     static std::unique_ptr<ResolvedOmg> resolve_omg(const OmgAST& block);
     static std::unique_ptr<ResolvedPrimitive> resolve_primitive(const PrimitiveAST& primitive);
     static std::optional<Type> resolve_type(Type parsed_type);
@@ -61,6 +63,8 @@ public:
     void generate_std_function(std::vector<std::unique_ptr<ResolvedStmt>>& std_resolved_ast, const std::string& name,
                           const std::vector<std::pair<std::string, Type>>& params, const Type& return_type);
     std::vector<std::unique_ptr<ResolvedStmt>> fill_std_functions();
+
+    // Scopes
     void add_scope() {
         scopes.emplace_back();
     }
@@ -69,6 +73,7 @@ public:
         scopes.pop_back();
     }
 
+    // Exceptions
     SemaException push_exception(const std::string& exception_message, const SourceLocation& loc) {
         SemaException exception{exception_message, loc, source_lines[loc.line - 1]};
         exceptions.push_back(exception);

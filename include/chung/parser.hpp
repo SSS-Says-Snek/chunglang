@@ -91,6 +91,7 @@ public:
     std::unique_ptr<StmtAST> parse_expression_statement(bool require_semicolons);
 
     std::unique_ptr<ExprAST> parse_if_expr();
+    std::unique_ptr<StmtAST> parse_while();
 
     // Heheheha
     std::unique_ptr<ExprAST> parse_expression_or_assignment();

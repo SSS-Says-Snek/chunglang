@@ -17,10 +17,10 @@
 
 int get_op_precedence(TokenType op) {
     static const std::unordered_map<TokenType, int> op_lookup{
-        {TokenType::GREATER_EQUAL, 1}, {TokenType::GREATER_THAN, 1}, {TokenType::LESS_EQUAL, 1},
-        {TokenType::LESS_THAN, 1},     {TokenType::EQUAL, 1},        {TokenType::ADD, 2},
-        {TokenType::SUB, 2},           {TokenType::MUL, 3},          {TokenType::DIV, 3},
-        {TokenType::MOD, 3},           {TokenType::POW, 4}};
+        {TokenType::GREATER_EQUAL, 10}, {TokenType::GREATER_THAN, 10}, {TokenType::LESS_EQUAL, 10},
+        {TokenType::LESS_THAN, 10},     {TokenType::EQUAL, 10},        {TokenType::ADD, 20},
+        {TokenType::SUB, 20},           {TokenType::MUL, 30},          {TokenType::DIV, 30},
+        {TokenType::MOD, 30},           {TokenType::POW, 40}};
 
     auto result = op_lookup.find(op);
     if (result == op_lookup.end()) {
@@ -170,7 +170,7 @@ std::unique_ptr<ExprAST> Parser::parse_bin_op(int min_op_precedence, std::unique
 
         int next_op_precedence = get_op_precedence(current_token().type);
         if (op_precedence < next_op_precedence) {
-            rhs = parse_bin_op(min_op_precedence + 1, std::move(rhs));
+            rhs = parse_bin_op(op_precedence + 1, std::move(rhs));
         }
 
         lhs = std::make_unique<BinaryExprAST>(op.loc, op.type, std::move(lhs), std::move(rhs));
@@ -221,6 +221,9 @@ std::unique_ptr<BlockAST> Parser::parse_block() {
             case TokenType::FUNC:
                 statements.push_back(parse_statement());
                 continue;
+            case TokenType::WHILE:
+                statements.push_back(parse_statement());
+                continue;
             default: {
                 auto expr_stmt = parse_expression_statement(false); // Will handle later
                 ExprAST* expr = (dynamic_cast<ExprStmtAST*>(expr_stmt.get())->expr).get();
@@ -257,7 +260,7 @@ std::unique_ptr<BlockAST> Parser::parse_block() {
                                expr)) { // Dynamic cast to see which expressions don't need semicolons (e.g if expr)
                     statements.push_back(std::move(expr_stmt));
                 } else {
-                    throw push_exception("Expected ';' after expression", current_token());
+                    throw push_exception("Expected ';' after expression ggg", current_token());
                 }
             }
         }
@@ -402,6 +405,21 @@ std::unique_ptr<ExprAST> Parser::parse_if_expr() {
     return std::make_unique<IfExprAST>(loc, std::move(condition), std::move(body), std::move(else_body));
 }
 
+std::unique_ptr<StmtAST> Parser::parse_while() {
+    SourceLocation loc = current_token().loc;
+    
+    // Eat 'while'
+    eat_token();
+
+    match_simple(TokenType::OPEN_PARENTHESES, "Expected '(' after 'while' keyword");
+    std::unique_ptr<ExprAST> condition = parse_expression();
+    match_simple(TokenType::CLOSE_PARENTHESES, "Expected ')' after condition expression");
+
+    std::unique_ptr<BlockAST> body = parse_block();
+
+    return std::make_unique<WhileAST>(loc, std::move(condition), std::move(body));
+}
+
 std::unique_ptr<StmtAST> Parser::parse_omg() {
     // Eat '__omg'
     eat_token();
@@ -454,6 +472,8 @@ std::unique_ptr<StmtAST> Parser::parse_statement() {
                     return parse_function();
                 case TokenType::__OMG:
                     return parse_omg();
+                case TokenType::WHILE:
+                    return parse_while();
                 default: {
                     std::cout << "You failed me.\n";
                     throw push_exception("You've failed me", current_token());

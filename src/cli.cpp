@@ -195,7 +195,7 @@ int run_parse(std::vector<std::string>& args) {
         // system((std::string{"clang++ $(llvm-config --ldflags --libs) "} + output_filepath + " chungbuild/prelude.o -o
         // chungbuild/output.out").c_str());
         system("clang++ src/library/prelude.cpp -Iinclude -c -o chungbuild/prelude.o");      // NOLINT
-        system("clang++ chungbuild/output.o chungbuild/prelude.o -o chungbuild/output.out"); // NOLINT
+        system("clang++ chungbuild/output.o chungbuild/prelude.o -lraylib -o chungbuild/output.out"); // NOLINT
     }
 
     return 0;

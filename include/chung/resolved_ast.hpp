@@ -231,3 +231,13 @@ public:
 
     llvm::Value* codegen(Context& ctx) override;
 };
+
+class ResolvedWhile : public ResolvedStmt { 
+public:
+    std::unique_ptr<ResolvedExpr> condition;
+    std::unique_ptr<ResolvedBlock> body;
+
+    ResolvedWhile(SourceLocation loc, std::unique_ptr<ResolvedExpr> condition, std::unique_ptr<ResolvedBlock> body) : ResolvedStmt(loc), condition{std::move(condition)}, body{std::move(body)} {}
+
+    llvm::Value* codegen(Context& ctx) override;
+};

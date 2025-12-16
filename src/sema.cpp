@@ -115,6 +115,10 @@ std::unique_ptr<ResolvedStmt> Sema::resolve_stmt(const StmtAST& stmt) {
         return resolve_assignment(*assignment);
     }
 
+    if (const auto* while_loop = dynamic_cast<const WhileAST*>(&stmt)) {
+        return resolve_while(*while_loop);
+    }
+
     // Every stmt should be covered already; if not, implementation error
     llvm_unreachable("Unhandled statement in Sema::resolve_stmt");
 }
@@ -258,6 +262,15 @@ std::unique_ptr<ResolvedAssignment> Sema::resolve_assignment(const AssignmentAST
     }
 
     return std::make_unique<ResolvedAssignment>(assignment.loc, std::move(resolved_variable), std::move(resolved_expr));
+}
+
+std::unique_ptr<ResolvedWhile> Sema::resolve_while(const WhileAST& while_loop) {
+    HANDLE_MAKE_VAR(condition, resolve_expr(*while_loop.condition))
+    // TODO: Also check if condition is comparable and evaluate
+
+    HANDLE_MAKE_VAR(resolved_body, resolve_block(*while_loop.body))
+
+    return std::make_unique<ResolvedWhile>(while_loop.loc, std::move(condition), std::move(resolved_body));
 }
 
 std::unique_ptr<ResolvedFunction> Sema::resolve_function(const FunctionAST& function) {
@@ -424,6 +437,17 @@ std::vector<std::unique_ptr<ResolvedStmt>> Sema::fill_std_functions() {
     std::vector<std::unique_ptr<ResolvedStmt>> std_resolved_ast;
     generate_std_function(std_resolved_ast, "print", {{"n", Type::int64}}, Type::void_);
     generate_std_function(std_resolved_ast, "print_char", {{"n", Type::int64}}, Type::void_);
+    generate_std_function(std_resolved_ast, "print_float64", {{"n", Type::float64}}, Type::void_);
+
+    // Raylib
+    generate_std_function(std_resolved_ast, "init_window", {{"width", Type::int64}, {"height", Type::int64}}, Type::void_);
+    generate_std_function(std_resolved_ast, "set_target_fps", {{"fps", Type::int64}}, Type::void_);
+    generate_std_function(std_resolved_ast, "window_should_close", {}, Type::int64);
+    generate_std_function(std_resolved_ast, "begin_drawing", {}, Type::void_);
+    generate_std_function(std_resolved_ast, "clear_background", {}, Type::void_);
+    generate_std_function(std_resolved_ast, "draw_circle", {{"x", Type::int64}, {"y", Type::int64}, {"radius", Type::int64}}, Type::void_);
+    generate_std_function(std_resolved_ast, "end_drawing", {}, Type::void_);
+    generate_std_function(std_resolved_ast, "close_window", {}, Type::void_);
 
     return std_resolved_ast;
 }

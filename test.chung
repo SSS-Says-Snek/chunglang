@@ -1,5 +1,3 @@
-func add_one(param: int64) -> int64 {
-    mut goon: int64 = 64;
     goon = param * goon;
     if (goon > 5) {
         goon
@@ -45,6 +43,14 @@ func test_if_exprs(param: int64) {
     });
 }
 
+func test_while() {
+    mut param = 0;
+    while (param < 10) {
+        print(param);
+        param = param + 1;
+    }
+}
+
 func gurt() -> int64 {
     if (2 > 1) {
         0
@@ -60,4 +66,6 @@ func main() {
     test_if_exprs(2);
     print(fib(10));
     print(gurt());
+
+    let e = 3.2;
 }

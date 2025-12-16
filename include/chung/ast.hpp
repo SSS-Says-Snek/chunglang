@@ -187,3 +187,14 @@ public:
 
     std::string stringify(size_t indent_level = 0) override;
 };
+
+// TODO: Maybe take a leaf out of Rust's book and make it an expr that can return stuff w/ break
+class WhileAST : public StmtAST { 
+public:
+    std::unique_ptr<ExprAST> condition;
+    std::unique_ptr<BlockAST> body;
+
+    WhileAST(SourceLocation loc, std::unique_ptr<ExprAST> condition, std::unique_ptr<BlockAST> body) : StmtAST(loc), condition{std::move(condition)}, body{std::move(body)} {}
+
+    std::string stringify(size_t indent_level = 0) override;
+};

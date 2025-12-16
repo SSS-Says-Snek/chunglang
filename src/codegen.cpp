@@ -100,8 +100,12 @@ llvm::Value* ResolvedIfExpr::codegen(Context& ctx) {
 
     llvm::Value* condition_code = condition->codegen(ctx);
 
-    llvm::Value* boolean =
-        ctx.builder.CreateICmpNE(condition_code, llvm::ConstantInt::get(ctx.context, llvm::APInt{1, 0, true}));
+    llvm::Value* boolean = nullptr;
+    if (condition->type == Type::int64) {
+        boolean = ctx.builder.CreateICmpNE(condition_code, llvm::ConstantInt::get(ctx.context, llvm::APInt{1, 0, true}));
+    } else if (condition->type == Type::float64) {
+        boolean = ctx.builder.CreateFCmpUNE(condition_code, llvm::ConstantFP::get(ctx.context, llvm::APFloat{0.0}));
+    }
 
     ctx.builder.CreateCondBr(boolean, if_block, else_block);
 
@@ -155,14 +159,39 @@ llvm::Value* ResolvedBinaryExpr::codegen(Context& ctx) {
     switch (op) {
         // TODO: Add type system (wow)
         case TokenType::ADD:
-            return ctx.builder.CreateAdd(lhs_code, rhs_code);
+            if (type == Type::int64) {
+                return ctx.builder.CreateAdd(lhs_code, rhs_code);
+            } else if (type == Type::float64) {
+                return ctx.builder.CreateFAdd(lhs_code, rhs_code);
+            }
         case TokenType::SUB:
-            return ctx.builder.CreateSub(lhs_code, rhs_code);
+            if (type == Type::int64) {
+                return ctx.builder.CreateSub(lhs_code, rhs_code);
+            } else if (type == Type::float64) {
+                return ctx.builder.CreateFSub(lhs_code, rhs_code);
+            }
         case TokenType::MUL:
-            return ctx.builder.CreateMul(lhs_code, rhs_code);
+            if (type == Type::int64) {
+                return ctx.builder.CreateMul(lhs_code, rhs_code);
+            } else if (type == Type::float64) {
+                return ctx.builder.CreateFMul(lhs_code, rhs_code);
+            }
         case TokenType::GREATER_THAN:
-            return ctx.builder.CreateICmpSGT(
-                lhs_code, rhs_code); // TODO: ICmpSGT Is only for I-nteger Cmp-arison with S-igned G-reater T-han
+            if (type == Type::int64) {
+                return ctx.builder.CreateICmpSGT(
+                    lhs_code, rhs_code); // TODO: ICmpSGT Is only for I-nteger Cmp-arison with S-igned G-reater T-han
+            } else if (type == Type::float64) {
+                auto* comparison = ctx.builder.CreateFCmpUGT(lhs_code, rhs_code);
+                return ctx.builder.CreateUIToFP(comparison, llvm::Type::getDoubleTy(ctx.context));
+            }
+        case TokenType::LESS_THAN:
+            if (type == Type::int64) {
+                return ctx.builder.CreateICmpSLT(
+                    lhs_code, rhs_code); // TODO: ICmpSGT Is only for I-nteger Cmp-arison with S-igned L-ess T-han
+            } else if (type == Type::float64) {
+                auto* comparison = ctx.builder.CreateFCmpULT(lhs_code, rhs_code);
+                return ctx.builder.CreateUIToFP(comparison, llvm::Type::getDoubleTy(ctx.context));
+            }
         case TokenType::EQUAL:
             return ctx.builder.CreateICmpEQ(lhs_code, rhs_code);
         default:
@@ -232,4 +261,32 @@ llvm::Value* ResolvedVariable::codegen(Context& ctx) {
 
 llvm::Value* ResolvedAssignment::codegen(Context& ctx) {
     return ctx.builder.CreateStore(expr->codegen(ctx), ctx.named_values[variable->declaration]);
+}
+
+llvm::Value* ResolvedWhile::codegen(Context& ctx) {
+    llvm::Function* current_function = ctx.builder.GetInsertBlock()->getParent();
+
+    auto *cond = llvm::BasicBlock::Create(ctx.context, "while.cond", current_function);
+    auto *body_block = llvm::BasicBlock::Create(ctx.context, "while.body", current_function);
+    auto *exit = llvm::BasicBlock::Create(ctx.context, "while.exit", current_function);
+
+    ctx.builder.CreateBr(cond);
+
+    ctx.builder.SetInsertPoint(cond);
+    llvm::Value* condition_code = condition->codegen(ctx);
+    
+    llvm::Value* boolean = nullptr;
+    if (condition->type == Type::int64) {
+        boolean = ctx.builder.CreateICmpNE(condition_code, llvm::ConstantInt::get(ctx.context, llvm::APInt{1, 0, true}));
+    } else if (condition->type == Type::float64) {
+        boolean = ctx.builder.CreateFCmpUNE(condition_code, llvm::ConstantFP::get(ctx.context, llvm::APFloat{0.0}));
+    }
+    ctx.builder.CreateCondBr(boolean, body_block, exit);
+
+    ctx.builder.SetInsertPoint(body_block);
+    body->codegen(ctx);
+    ctx.builder.CreateBr(cond); // Goes back to cond
+
+    ctx.builder.SetInsertPoint(exit);
+    return nullptr;
 }
