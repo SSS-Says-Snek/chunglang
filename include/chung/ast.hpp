@@ -112,6 +112,18 @@ public:
     std::string stringify(size_t indent_level = 0) override;
 };
 
+class UnaryExprAST : public ExprAST {
+public:
+    TokenType op;
+    std::unique_ptr<ExprAST> expr;
+
+    UnaryExprAST(SourceLocation loc, TokenType op, std::unique_ptr<ExprAST> expr)
+        : ExprAST(loc), op{op}, expr{std::move(expr)} {
+    }
+
+    std::string stringify(size_t indent_level) override;
+};
+
 class BinaryExprAST : public ExprAST {
 public:
     TokenType op;

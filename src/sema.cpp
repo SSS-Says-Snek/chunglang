@@ -148,6 +148,10 @@ std::unique_ptr<ResolvedExpr> Sema::resolve_expr(const ExprAST& expr) {
         return resolve_block(*block);
     }
 
+    if (const auto* unary_expr = dynamic_cast<const UnaryExprAST*>(&expr)) {
+        return resolve_unary_expr(*unary_expr);
+    }
+
     // Every expr should be covered already; if not, implementation error
     llvm_unreachable("Unhandled expression in Sema::resolve_expr");
 }
@@ -187,6 +191,17 @@ std::unique_ptr<ResolvedIfExpr> Sema::resolve_if_expr(const IfExprAST& if_expr) 
 
     return std::make_unique<ResolvedIfExpr>(if_expr.loc, std::move(resolved_body->type), std::move(condition),
                                             std::move(resolved_body), std::move(resolved_else_body));
+}
+
+std::unique_ptr<ResolvedUnaryExpr> Sema::resolve_unary_expr(const UnaryExprAST& unary_expr) {
+    HANDLE_MAKE_VAR(resolved_unary_expr, resolve_expr(*unary_expr.expr));
+
+    if (resolved_unary_expr->type == Type::void_) {
+        push_exception("Expression has type void and is incompatible with the unary operator", unary_expr.loc);
+        return nullptr;
+    }
+
+    return std::make_unique<ResolvedUnaryExpr>(unary_expr.loc, unary_expr.op, std::move(resolved_unary_expr));
 }
 
 std::unique_ptr<ResolvedBinaryExpr> Sema::resolve_binary_expr(const BinaryExprAST& binary_expr) {

@@ -48,6 +48,7 @@ public:
     std::unique_ptr<ResolvedExpr> resolve_expr(const ExprAST& expr);
     std::unique_ptr<ResolvedExpr> resolve_expr_stmt(const ExprStmtAST& expr_stmt);
     std::unique_ptr<ResolvedIfExpr> resolve_if_expr(const IfExprAST& if_expr);
+    std::unique_ptr<ResolvedUnaryExpr> resolve_unary_expr(const UnaryExprAST& unary_expr);
     std::unique_ptr<ResolvedBinaryExpr> resolve_binary_expr(const BinaryExprAST& binary_expr);
     std::unique_ptr<ResolvedVariable> resolve_variable(const VariableAST& variable);
     std::unique_ptr<ResolvedAssignment> resolve_assignment(const AssignmentAST& assignment);

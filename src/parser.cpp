@@ -154,6 +154,21 @@ std::unique_ptr<ExprAST> Parser::parse_parentheses() {
     return expr;
 }
 
+std::unique_ptr<ExprAST> Parser::parse_unary() {
+    if (!is_operator(current_token().type)) {
+        return parse_primary();
+    }
+
+    Token op = eat_token();
+    if (op.type != TokenType::SUB) { // Only minus is allowed so far
+        throw push_exception("Operator cannot be used as unary expression", op);
+    }
+    if (auto operand = parse_unary()) {
+        return std::make_unique<UnaryExprAST>(op.loc, op.type, std::move(operand));
+    }
+    return nullptr;
+}
+
 std::unique_ptr<ExprAST> Parser::parse_bin_op(int min_op_precedence, std::unique_ptr<ExprAST> lhs) {
     while (true) {
         Token op = current_token();
@@ -166,7 +181,7 @@ std::unique_ptr<ExprAST> Parser::parse_bin_op(int min_op_precedence, std::unique
 
         // Eat operator
         eat_token();
-        std::unique_ptr<ExprAST> rhs = parse_primary();
+        std::unique_ptr<ExprAST> rhs = parse_unary();
 
         int next_op_precedence = get_op_precedence(current_token().type);
         if (op_precedence < next_op_precedence) {
@@ -437,7 +452,7 @@ std::unique_ptr<StmtAST> Parser::parse_omg() {
 }
 
 std::unique_ptr<ExprAST> Parser::parse_expression() {
-    std::unique_ptr<ExprAST> lhs = parse_primary();
+    std::unique_ptr<ExprAST> lhs = parse_unary();
     if (lhs == nullptr) {
         return nullptr;
     }

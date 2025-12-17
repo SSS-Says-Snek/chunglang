@@ -80,6 +80,7 @@ public:
     std::unique_ptr<ExprAST> parse_identifier();
     std::unique_ptr<ExprAST> parse_parentheses();
     std::unique_ptr<ExprAST> parse_bin_op(int min_op_precedence, std::unique_ptr<ExprAST> lhs);
+    std::unique_ptr<ExprAST> parse_unary();
     std::unique_ptr<ExprAST> parse_primitive();
     std::unique_ptr<ExprAST> parse_primary();
 

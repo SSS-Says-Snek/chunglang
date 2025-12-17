@@ -229,6 +229,15 @@ std::string ExprStmtAST::stringify(size_t indent_level) {
     return string;
 }
 
+std::string UnaryExprAST::stringify(size_t indent_level) {
+    std::string string{indent_string(indent_level, "Unary Operation:")};
+
+    string += indent_string(indent_level + 1, "Operator: " + stringify_op(op, false));
+    string += indent_string(indent_level + 1, "Expression:") + expr->stringify(indent_level + 2);
+
+    return string;
+}
+
 std::string BinaryExprAST::stringify(size_t indent_level) {
     std::string string{indent_string(indent_level, "Binary Operation:")};
 

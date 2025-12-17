@@ -1,3 +1,5 @@
+func add_one(param: int64) -> int64 {
+    mut goon = 3;
     goon = param * goon;
     if (goon > 5) {
         goon

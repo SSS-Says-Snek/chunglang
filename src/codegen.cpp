@@ -149,6 +149,24 @@ llvm::Value* ResolvedExprStmt::codegen(Context& ctx) {
     return expr->codegen(ctx);
 }
 
+llvm::Value* ResolvedUnaryExpr::codegen(Context& ctx) {
+    llvm::Value* expr_code = expr->codegen(ctx);
+    if (!expr_code) {
+        return nullptr;
+    }
+
+    if (op == TokenType::SUB) {
+        if (type == Type::int64) {
+            return ctx.builder.CreateNeg(expr_code);
+        } else if (type == Type::float64) {
+            return ctx.builder.CreateFNeg(expr_code);
+        }
+    }
+
+    std::cerr << "NOT IMPLEMENTED YET (UnaryExprAST)\n";
+    return nullptr;
+}
+
 llvm::Value* ResolvedBinaryExpr::codegen(Context& ctx) {
     llvm::Value* lhs_code = lhs->codegen(ctx);
     llvm::Value* rhs_code = rhs->codegen(ctx);
@@ -164,18 +182,21 @@ llvm::Value* ResolvedBinaryExpr::codegen(Context& ctx) {
             } else if (type == Type::float64) {
                 return ctx.builder.CreateFAdd(lhs_code, rhs_code);
             }
+            break;
         case TokenType::SUB:
             if (type == Type::int64) {
                 return ctx.builder.CreateSub(lhs_code, rhs_code);
             } else if (type == Type::float64) {
                 return ctx.builder.CreateFSub(lhs_code, rhs_code);
             }
+            break;
         case TokenType::MUL:
             if (type == Type::int64) {
                 return ctx.builder.CreateMul(lhs_code, rhs_code);
             } else if (type == Type::float64) {
                 return ctx.builder.CreateFMul(lhs_code, rhs_code);
             }
+            break;
         case TokenType::GREATER_THAN:
             if (type == Type::int64) {
                 return ctx.builder.CreateICmpSGT(
@@ -184,6 +205,7 @@ llvm::Value* ResolvedBinaryExpr::codegen(Context& ctx) {
                 auto* comparison = ctx.builder.CreateFCmpUGT(lhs_code, rhs_code);
                 return ctx.builder.CreateUIToFP(comparison, llvm::Type::getDoubleTy(ctx.context));
             }
+            break;
         case TokenType::LESS_THAN:
             if (type == Type::int64) {
                 return ctx.builder.CreateICmpSLT(
@@ -192,6 +214,7 @@ llvm::Value* ResolvedBinaryExpr::codegen(Context& ctx) {
                 auto* comparison = ctx.builder.CreateFCmpULT(lhs_code, rhs_code);
                 return ctx.builder.CreateUIToFP(comparison, llvm::Type::getDoubleTy(ctx.context));
             }
+            break;
         case TokenType::EQUAL:
             return ctx.builder.CreateICmpEQ(lhs_code, rhs_code);
         default:

@@ -75,7 +75,8 @@ public:
     std::unique_ptr<ResolvedExpr> expr;
     bool is_mutable;
 
-    ResolvedVarDeclare(SourceLocation loc, std::string name, Type type, std::unique_ptr<ResolvedExpr> expr, bool is_mutable)
+    ResolvedVarDeclare(SourceLocation loc, std::string name, Type type, std::unique_ptr<ResolvedExpr> expr,
+                       bool is_mutable)
         : ResolvedDecl(loc, std::move(name), std::move(type)), expr{std::move(expr)}, is_mutable{is_mutable} {
     }
 
@@ -129,6 +130,19 @@ public:
     }
 
     // std::string stringify(size_t indent_level = 0) override;
+    llvm::Value* codegen(Context& ctx) override;
+};
+
+class ResolvedUnaryExpr : public ResolvedExpr {
+public:
+    TokenType op;
+    std::unique_ptr<ResolvedExpr> expr;
+
+    ResolvedUnaryExpr(SourceLocation loc, TokenType op, std::unique_ptr<ResolvedExpr> expr)
+        : ResolvedExpr(loc, expr->type), op{op}, expr{std::move(expr)} {
+    }
+
+    // std::string stringify(size_t indent_level) override;
     llvm::Value* codegen(Context& ctx) override;
 };
 
@@ -225,19 +239,22 @@ public:
     std::unique_ptr<ResolvedVariable> variable;
     std::unique_ptr<ResolvedExpr> expr;
 
-    ResolvedAssignment(SourceLocation loc, std::unique_ptr<ResolvedVariable> variable, std::unique_ptr<ResolvedExpr> expr)
+    ResolvedAssignment(SourceLocation loc, std::unique_ptr<ResolvedVariable> variable,
+                       std::unique_ptr<ResolvedExpr> expr)
         : ResolvedStmt(loc), variable{std::move(variable)}, expr{std::move(expr)} {
     }
 
     llvm::Value* codegen(Context& ctx) override;
 };
 
-class ResolvedWhile : public ResolvedStmt { 
+class ResolvedWhile : public ResolvedStmt {
 public:
     std::unique_ptr<ResolvedExpr> condition;
     std::unique_ptr<ResolvedBlock> body;
 
-    ResolvedWhile(SourceLocation loc, std::unique_ptr<ResolvedExpr> condition, std::unique_ptr<ResolvedBlock> body) : ResolvedStmt(loc), condition{std::move(condition)}, body{std::move(body)} {}
+    ResolvedWhile(SourceLocation loc, std::unique_ptr<ResolvedExpr> condition, std::unique_ptr<ResolvedBlock> body)
+        : ResolvedStmt(loc), condition{std::move(condition)}, body{std::move(body)} {
+    }
 
     llvm::Value* codegen(Context& ctx) override;
 };
