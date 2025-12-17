@@ -42,7 +42,7 @@ bool is_operator(TokenType op) {
         TokenType::MOD,         TokenType::POW,       TokenType::BITWISE_AND,   TokenType::BITWISE_OR,
         TokenType::BITWISE_NOT, TokenType::ASSIGN,    TokenType::GREATER_EQUAL, TokenType::GREATER_THAN,
         TokenType::LESS_EQUAL,  TokenType::LESS_THAN, TokenType::EQUAL,         TokenType::AND,
-        TokenType::OR};
+        TokenType::OR, TokenType::NOT};
 
     return std::find(std::begin(ops), std::end(ops), op) != std::end(ops);
 }

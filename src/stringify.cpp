@@ -37,7 +37,8 @@ std::string stringify_op(const TokenType& op, bool verbose) {
         {TokenType::EQUAL, {"Equal", "=="}},
         {TokenType::ASSIGN, {"Assign", "="}},
         {TokenType::AND, {"And", "And"}},
-        {TokenType::OR, {"Or", "Or"}}};
+        {TokenType::OR, {"Or", "Or"}},
+        {TokenType::NOT, {"Not", "Not"}}};
 
     if (verbose) {
         return token_to_string.at(op).first;

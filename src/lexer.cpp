@@ -98,6 +98,8 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                         type = TokenType::AND;
                     } else if (identifier == "or") {
                         type = TokenType::OR;
+                    } else if (identifier == "not") {
+                        type = TokenType::NOT;
                     }
                 }
 

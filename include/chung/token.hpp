@@ -19,6 +19,7 @@ enum class TokenType : uint8_t {
     POW,
     AND,
     OR,
+    NOT,
     BITWISE_AND,
     BITWISE_OR,
     BITWISE_NOT,

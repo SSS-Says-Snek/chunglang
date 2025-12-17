@@ -161,7 +161,7 @@ std::unique_ptr<ExprAST> Parser::parse_unary() {
     }
 
     Token op = eat_token();
-    if (op.type != TokenType::SUB) { // Only minus is allowed so far
+    if (op.type != TokenType::SUB && op.type != TokenType::NOT) { // Only minus and not is allowed so far
         throw push_exception("Operator cannot be used as unary expression", op);
     }
     if (auto operand = parse_unary()) {

@@ -9,6 +9,16 @@
             "expressions": "native",
             "program": "${workspaceFolder}/build/chung",
             "args": ["parse", "test.chung"]
+        },
+        {
+            "type": "codelldb",
+            "request": "launch",
+            "name": "Debug Compiler and Parse `examples/game.chung`",
+            "preLaunchTask": "Build (Debug) and Compile Project",
+            "expressions": "native",
+            "program": "${workspaceFolder}/build/chung",
+            "args": ["parse", "examples/game.chung"]
         }
+
     ]
 }

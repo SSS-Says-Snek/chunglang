@@ -39,11 +39,11 @@ struct Context {
     }
 
     llvm::Value* type_to_bool(llvm::Value* code) {
-        code->getType()->print(llvm::errs());
         if (code->getType()->isIntegerTy()) {
-            return builder.CreateICmpNE(code, llvm::ConstantInt::get(context, llvm::APInt{1, 0, true}));
+            llvm::Value* zero = builder.getInt1(false);
+            llvm::Value* extended = builder.CreateZExt(zero, code->getType());
+            return builder.CreateICmpNE(code, extended);
         } else if (code->getType()->isDoubleTy()) {
-            std::cout << "OMGGGG\n";
             return builder.CreateFCmpUNE(code, llvm::ConstantFP::get(context, llvm::APFloat{0.0}));
         }
 
