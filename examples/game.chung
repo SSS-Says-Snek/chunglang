@@ -15,15 +15,11 @@ func main() {
         ball_x = ball_x + ball_speed_x;
         ball_y = ball_y + ball_speed_y;
 
-        if (ball_x + ball_radius > SCREEN_WIDTH) {
-            ball_speed_x = ball_speed_x * -1;
-        } else if (ball_x - ball_radius < 0) {
+        if (ball_x + ball_radius > SCREEN_WIDTH or ball_x - ball_radius < 0) {
             ball_speed_x = ball_speed_x * -1;
         }
 
-        if (ball_y + ball_radius > SCREEN_HEIGHT) {
-            ball_speed_y = ball_speed_y * -1;
-        } else if (ball_y - ball_radius < 0) {
+        if (ball_y + ball_radius > SCREEN_HEIGHT or ball_y - ball_radius < 0) {
             ball_speed_y = ball_speed_y * -1;
         }
 
