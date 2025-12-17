@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <map>
 #include <functional>
 
@@ -35,5 +36,18 @@ struct Context {
 
     llvm::Value* load_value(llvm::Value* value, llvm::Type* type) {
         return builder.CreateLoad(type, value);
+    }
+
+    llvm::Value* type_to_bool(llvm::Value* code) {
+        code->getType()->print(llvm::errs());
+        if (code->getType()->isIntegerTy()) {
+            return builder.CreateICmpNE(code, llvm::ConstantInt::get(context, llvm::APInt{1, 0, true}));
+        } else if (code->getType()->isDoubleTy()) {
+            std::cout << "OMGGGG\n";
+            return builder.CreateFCmpUNE(code, llvm::ConstantFP::get(context, llvm::APFloat{0.0}));
+        }
+
+        std::cerr << "Type not implemented";
+        return nullptr;
     }
 };

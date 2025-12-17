@@ -17,6 +17,8 @@ enum class TokenType : uint8_t {
     DIV,
     MOD,
     POW,
+    AND,
+    OR,
     BITWISE_AND,
     BITWISE_OR,
     BITWISE_NOT,

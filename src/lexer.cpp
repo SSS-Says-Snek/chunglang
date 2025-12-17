@@ -93,6 +93,12 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                         std::cout << "Keyword NOT implemented yet";
                         type = TokenType::INVALID;
                     }
+                } else {
+                    if (identifier == "and") {
+                        type = TokenType::AND;
+                    } else if (identifier == "or") {
+                        type = TokenType::OR;
+                    }
                 }
 
                 tokens.push_back(make_token(type, start, cursor));

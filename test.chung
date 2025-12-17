@@ -68,6 +68,4 @@ func main() {
     test_if_exprs(2);
     print(fib(10));
     print(gurt());
-
-    let e = 3.2;
 }

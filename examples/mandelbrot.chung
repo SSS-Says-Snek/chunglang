@@ -11,9 +11,7 @@ func print_density(density: float64) {
 }
 
 func mandel_converger(real: float64, imag: float64, iters: float64, creal: float64, cimag: float64) -> float64 {
-    if (iters > 255.0) {
-        iters
-    } else if (real*real + imag*imag > 4.0) {
+    if (iters > 255.0 or real*real + imag*imag > 4.0) {
         iters
     } else {
         mandel_converger(real*real - imag*imag + creal, 2.0*real*imag + cimag, iters + 1.0, creal, cimag)

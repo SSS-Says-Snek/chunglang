@@ -35,7 +35,9 @@ std::string stringify_op(const TokenType& op, bool verbose) {
         {TokenType::LESS_EQUAL, {"LessEqual", "<="}},
         {TokenType::LESS_THAN, {"LessThan", "<"}},
         {TokenType::EQUAL, {"Equal", "=="}},
-        {TokenType::ASSIGN, {"Assign", "="}}};
+        {TokenType::ASSIGN, {"Assign", "="}},
+        {TokenType::AND, {"And", "And"}},
+        {TokenType::OR, {"Or", "Or"}}};
 
     if (verbose) {
         return token_to_string.at(op).first;

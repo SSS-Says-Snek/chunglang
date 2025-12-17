@@ -17,10 +17,11 @@
 
 int get_op_precedence(TokenType op) {
     static const std::unordered_map<TokenType, int> op_lookup{
-        {TokenType::GREATER_EQUAL, 10}, {TokenType::GREATER_THAN, 10}, {TokenType::LESS_EQUAL, 10},
-        {TokenType::LESS_THAN, 10},     {TokenType::EQUAL, 10},        {TokenType::ADD, 20},
-        {TokenType::SUB, 20},           {TokenType::MUL, 30},          {TokenType::DIV, 30},
-        {TokenType::MOD, 30},           {TokenType::POW, 40}};
+        {TokenType::AND, 10}, {TokenType::OR, 10},
+        {TokenType::GREATER_EQUAL, 20}, {TokenType::GREATER_THAN, 20}, {TokenType::LESS_EQUAL, 20},
+        {TokenType::LESS_THAN, 20},     {TokenType::EQUAL, 20},        {TokenType::ADD, 30},
+        {TokenType::SUB, 30},           {TokenType::MUL, 40},          {TokenType::DIV, 40},
+        {TokenType::MOD, 40},           {TokenType::POW, 50}};
 
     auto result = op_lookup.find(op);
     if (result == op_lookup.end()) {

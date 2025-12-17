@@ -1,6 +1,7 @@
 #include "chung/resolved_ast.hpp"
 #include <iostream>
 #include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/CFG.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Instructions.h>
 
@@ -54,7 +55,6 @@ llvm::Value* ResolvedFunction::codegen(Context& ctx) {
     llvm::Function* function =
         llvm::Function::Create(function_type, llvm::Function::ExternalLinkage, name, ctx.module.get());
 
-
     llvm::BasicBlock* function_block = llvm::BasicBlock::Create(ctx.context, "entry", function);
     ctx.builder.SetInsertPoint(function_block);
 
@@ -100,13 +100,7 @@ llvm::Value* ResolvedIfExpr::codegen(Context& ctx) {
 
     llvm::Value* condition_code = condition->codegen(ctx);
 
-    llvm::Value* boolean = nullptr;
-    if (condition->type == Type::int64) {
-        boolean = ctx.builder.CreateICmpNE(condition_code, llvm::ConstantInt::get(ctx.context, llvm::APInt{1, 0, true}));
-    } else if (condition->type == Type::float64) {
-        boolean = ctx.builder.CreateFCmpUNE(condition_code, llvm::ConstantFP::get(ctx.context, llvm::APFloat{0.0}));
-    }
-
+    llvm::Value* boolean = ctx.type_to_bool(condition_code);
     ctx.builder.CreateCondBr(boolean, if_block, else_block);
 
     if_block->insertInto(current_function);
@@ -167,11 +161,40 @@ llvm::Value* ResolvedUnaryExpr::codegen(Context& ctx) {
     return nullptr;
 }
 
+void codegen_logical_operators(Context& ctx, llvm::BasicBlock* true_block, ResolvedExpr& bin,
+                               llvm::BasicBlock* false_block) {
+    llvm::Function* current_function = ctx.builder.GetInsertBlock()->getParent();
+
+    const auto* binop = dynamic_cast<const ResolvedBinaryExpr*>(&bin);
+
+    if (binop && binop->op == TokenType::AND) {
+        llvm::BasicBlock* next_block = llvm::BasicBlock::Create(ctx.context, "and.true", current_function);
+        codegen_logical_operators(ctx, next_block, *binop->lhs, false_block);
+        ctx.builder.SetInsertPoint(next_block);
+        codegen_logical_operators(ctx, true_block, *binop->rhs, false_block);
+        return;
+    } else if (binop && binop->op == TokenType::OR) {
+        llvm::BasicBlock* next_block = llvm::BasicBlock::Create(ctx.context, "or.false", current_function);
+        codegen_logical_operators(ctx, true_block, *binop->lhs, next_block);
+        ctx.builder.SetInsertPoint(next_block);
+        codegen_logical_operators(ctx, true_block, *binop->rhs, false_block);
+        return;
+    }
+
+    llvm::Value* value = ctx.type_to_bool(bin.codegen(ctx));
+    ctx.builder.CreateCondBr(value, true_block, false_block);
+}
+
 llvm::Value* ResolvedBinaryExpr::codegen(Context& ctx) {
-    llvm::Value* lhs_code = lhs->codegen(ctx);
-    llvm::Value* rhs_code = rhs->codegen(ctx);
-    if (!lhs_code || !rhs_code) {
-        return nullptr;
+    llvm::Value* lhs_code = nullptr;
+    llvm::Value* rhs_code = nullptr;
+
+    if (op != TokenType::AND && op != TokenType::OR) {
+        lhs_code = lhs->codegen(ctx);
+        rhs_code = rhs->codegen(ctx);
+        if (!lhs_code || !rhs_code) {
+            return nullptr;
+        }
     }
 
     switch (op) {
@@ -202,8 +225,7 @@ llvm::Value* ResolvedBinaryExpr::codegen(Context& ctx) {
                 return ctx.builder.CreateICmpSGT(
                     lhs_code, rhs_code); // TODO: ICmpSGT Is only for I-nteger Cmp-arison with S-igned G-reater T-han
             } else if (type == Type::float64) {
-                auto* comparison = ctx.builder.CreateFCmpUGT(lhs_code, rhs_code);
-                return ctx.builder.CreateUIToFP(comparison, llvm::Type::getDoubleTy(ctx.context));
+                return ctx.builder.CreateFCmpUGT(lhs_code, rhs_code);
             }
             break;
         case TokenType::LESS_THAN:
@@ -211,12 +233,43 @@ llvm::Value* ResolvedBinaryExpr::codegen(Context& ctx) {
                 return ctx.builder.CreateICmpSLT(
                     lhs_code, rhs_code); // TODO: ICmpSGT Is only for I-nteger Cmp-arison with S-igned L-ess T-han
             } else if (type == Type::float64) {
-                auto* comparison = ctx.builder.CreateFCmpULT(lhs_code, rhs_code);
-                return ctx.builder.CreateUIToFP(comparison, llvm::Type::getDoubleTy(ctx.context));
+                return ctx.builder.CreateFCmpULT(lhs_code, rhs_code);
             }
             break;
         case TokenType::EQUAL:
             return ctx.builder.CreateICmpEQ(lhs_code, rhs_code);
+        case TokenType::AND:
+        case TokenType::OR: {
+            llvm::Function* current_function = ctx.builder.GetInsertBlock()->getParent();
+            bool is_or = op == TokenType::OR;
+            const auto* merge_tag = is_or ? "or.merge" : "and.merge";
+            const auto* rhs_tag = is_or ? "or.rhs" : "and.rhs";
+
+            llvm::BasicBlock* merge_block = llvm::BasicBlock::Create(ctx.context, merge_tag, current_function);
+            llvm::BasicBlock* rhs_block = llvm::BasicBlock::Create(ctx.context, rhs_tag, current_function);
+            llvm::BasicBlock* true_block = is_or ? merge_block : rhs_block;
+            llvm::BasicBlock* false_block = is_or ? rhs_block : merge_block;
+            codegen_logical_operators(ctx, true_block, *lhs, false_block);
+
+            ctx.builder.SetInsertPoint(rhs_block);
+            rhs_code = rhs->codegen(ctx);
+            llvm::Value* rhs_value = ctx.type_to_bool(rhs_code);
+            ctx.builder.CreateBr(merge_block);
+
+            rhs_block = ctx.builder.GetInsertBlock();
+            ctx.builder.SetInsertPoint(merge_block);
+            llvm::PHINode* phi = ctx.builder.CreatePHI(ctx.builder.getInt1Ty(), 2);
+
+            for (auto it = llvm::pred_begin(merge_block); it != llvm::pred_end(merge_block); ++it) {
+                if (*it == rhs_block) {
+                    phi->addIncoming(rhs_value, rhs_block);
+                } else {
+                    phi->addIncoming(ctx.builder.getInt1(is_or), *it);
+                }
+            }
+
+            return ctx.type_to_bool(phi);
+        }
         default:
             std::cerr << "NOT IMPLEMENTED YET (BinaryExprAST)\n";
     }
@@ -289,21 +342,16 @@ llvm::Value* ResolvedAssignment::codegen(Context& ctx) {
 llvm::Value* ResolvedWhile::codegen(Context& ctx) {
     llvm::Function* current_function = ctx.builder.GetInsertBlock()->getParent();
 
-    auto *cond = llvm::BasicBlock::Create(ctx.context, "while.cond", current_function);
-    auto *body_block = llvm::BasicBlock::Create(ctx.context, "while.body", current_function);
-    auto *exit = llvm::BasicBlock::Create(ctx.context, "while.exit", current_function);
+    auto* cond = llvm::BasicBlock::Create(ctx.context, "while.cond", current_function);
+    auto* body_block = llvm::BasicBlock::Create(ctx.context, "while.body", current_function);
+    auto* exit = llvm::BasicBlock::Create(ctx.context, "while.exit", current_function);
 
     ctx.builder.CreateBr(cond);
 
     ctx.builder.SetInsertPoint(cond);
     llvm::Value* condition_code = condition->codegen(ctx);
-    
-    llvm::Value* boolean = nullptr;
-    if (condition->type == Type::int64) {
-        boolean = ctx.builder.CreateICmpNE(condition_code, llvm::ConstantInt::get(ctx.context, llvm::APInt{1, 0, true}));
-    } else if (condition->type == Type::float64) {
-        boolean = ctx.builder.CreateFCmpUNE(condition_code, llvm::ConstantFP::get(ctx.context, llvm::APFloat{0.0}));
-    }
+
+    llvm::Value* boolean = ctx.type_to_bool(condition_code);
     ctx.builder.CreateCondBr(boolean, body_block, exit);
 
     ctx.builder.SetInsertPoint(body_block);
