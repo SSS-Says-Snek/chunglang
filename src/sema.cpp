@@ -460,7 +460,11 @@ std::vector<std::unique_ptr<ResolvedStmt>> Sema::fill_std_functions() {
     generate_std_function(std_resolved_ast, "window_should_close", {}, Type::int64);
     generate_std_function(std_resolved_ast, "begin_drawing", {}, Type::void_);
     generate_std_function(std_resolved_ast, "clear_background", {}, Type::void_);
-    generate_std_function(std_resolved_ast, "draw_circle", {{"x", Type::int64}, {"y", Type::int64}, {"radius", Type::int64}}, Type::void_);
+    generate_std_function(std_resolved_ast, "draw_circle", {{"x", Type::int64}, {"y", Type::int64}, {"radius", Type::int64}, {"r", Type::int64}, {"g", Type::int64}, {"b", Type::int64}}, Type::void_);
+    generate_std_function(std_resolved_ast, "draw_rectangle", {{"x", Type::int64}, {"y", Type::int64}, {"width", Type::int64}, {"height", Type::int64}, {"r", Type::int64}, {"g", Type::int64}, {"b", Type::int64}}, Type::void_);
+    generate_std_function(std_resolved_ast, "draw_line", {{"x", Type::int64}, {"y", Type::int64}, {"end_x", Type::int64}, {"end_y", Type::int64}, {"r", Type::int64}, {"g", Type::int64}, {"b", Type::int64}}, Type::void_);
+    generate_std_function(std_resolved_ast, "draw_number", {{"x", Type::int64}, {"y", Type::int64}, {"number", Type::int64}, {"font_size", Type::int64}}, Type::void_);
+    generate_std_function(std_resolved_ast, "is_key_pressed", {{"key", Type::int64}}, Type::int64);
     generate_std_function(std_resolved_ast, "end_drawing", {}, Type::void_);
     generate_std_function(std_resolved_ast, "close_window", {}, Type::void_);
 

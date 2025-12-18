@@ -38,8 +38,24 @@ void clear_background() {
     ClearBackground(BLACK);
 }
 
-void draw_circle(int64_t x, int64_t y, int64_t radius) {
-    DrawCircle(x, y, radius, WHITE);
+void draw_circle(int64_t x, int64_t y, int64_t radius, int64_t r, int64_t g, int64_t b) {
+    DrawCircle(x, y, radius, Color{static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), 255});
+}
+
+void draw_rectangle(int64_t x, int64_t y, int64_t width, int64_t height, int64_t r, int64_t g, int64_t b) {
+    DrawRectangle(x, y, width, height, Color{static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), 255});
+}
+
+void draw_line(int64_t x, int64_t y, int64_t end_x, int64_t end_y, int64_t r, int64_t g, int64_t b) {
+    DrawLine(x, y, end_x, end_y, Color{static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), 255});
+}
+
+void draw_number(int64_t x, int64_t y, int64_t number, int64_t font_size) {
+    DrawText(TextFormat("%i", number), x, y, font_size, WHITE);
+}
+
+int64_t is_key_pressed(int64_t key) {
+    return IsKeyDown(key);
 }
 
 void end_drawing() {

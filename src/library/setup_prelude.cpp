@@ -32,7 +32,11 @@ void setup_prelude(Context& ctx) {
     setup_function(ctx, "window_should_close", {}, int64_type);
     setup_function(ctx, "begin_drawing", {}, void_type);
     setup_function(ctx, "clear_background", {}, void_type);
-    setup_function(ctx, "draw_circle", {{"x", int64_type}, {"y", int64_type}, {"radius", int64_type}}, void_type);
+    setup_function(ctx, "draw_circle", {{"x", int64_type}, {"y", int64_type}, {"radius", int64_type}, {"r", int64_type}, {"g", int64_type}, {"b", int64_type}}, void_type);
+    setup_function(ctx, "draw_rectangle", {{"x", int64_type}, {"y", int64_type}, {"width", int64_type}, {"height", int64_type}, {"r", int64_type}, {"g", int64_type}, {"b", int64_type}}, void_type);
+    setup_function(ctx, "draw_line", {{"x", int64_type}, {"y", int64_type}, {"end_x", int64_type}, {"end_y", int64_type}, {"r", int64_type}, {"g", int64_type}, {"b", int64_type}}, void_type);
+    setup_function(ctx, "draw_number", {{"x", int64_type}, {"y", int64_type}, {"number", int64_type}, {"font_size", int64_type}}, void_type);
+    setup_function(ctx, "is_key_pressed", {{"key", int64_type}}, int64_type);
     setup_function(ctx, "end_drawing", {}, void_type);
     setup_function(ctx, "close_window", {}, void_type);
 }
