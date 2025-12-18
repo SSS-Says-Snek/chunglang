@@ -1,0 +1,25 @@
+{
+  "name": "chunglang",
+  "displayName": "Chunglang",
+  "description": "Syntax highlighting for Chunglang",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.106.3"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "chunglang",
+      "aliases": ["Chunglang", "chunglang"],
+      "extensions": [".chung",".cg"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "chunglang",
+      "scopeName": "source.chung",
+      "path": "./syntaxes/chunglang.tmLanguage.json"
+    }]
+  }
+}
