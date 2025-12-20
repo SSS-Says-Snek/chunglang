@@ -26,7 +26,7 @@ void set_target_fps(int64_t fps) {
     SetTargetFPS(fps);
 }
 
-int64_t window_should_close() {
+bool window_should_close() {
     return WindowShouldClose();
 }
 
@@ -54,7 +54,7 @@ void draw_number(int64_t x, int64_t y, int64_t number, int64_t font_size) {
     DrawText(TextFormat("%i", number), x, y, font_size, WHITE);
 }
 
-int64_t is_key_pressed(int64_t key) {
+bool is_key_pressed(int64_t key) {
     return IsKeyDown(key);
 }
 

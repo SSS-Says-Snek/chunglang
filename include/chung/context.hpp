@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <map>
 #include <functional>
 
@@ -47,7 +46,7 @@ struct Context {
             return builder.CreateFCmpUNE(code, llvm::ConstantFP::get(context, llvm::APFloat{0.0}));
         }
 
-        std::cerr << "Type not implemented";
+        llvm_unreachable("Type not implemented");
         return nullptr;
     }
 };

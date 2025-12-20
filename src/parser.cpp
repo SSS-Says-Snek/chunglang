@@ -276,7 +276,7 @@ std::unique_ptr<BlockAST> Parser::parse_block() {
                                expr)) { // Dynamic cast to see which expressions don't need semicolons (e.g if expr)
                     statements.push_back(std::move(expr_stmt));
                 } else {
-                    throw push_exception("Expected ';' after expression ggg", current_token());
+                    throw push_exception("Expected ';' after expression", current_token());
                 }
             }
         }

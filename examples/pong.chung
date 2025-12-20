@@ -8,7 +8,7 @@ func clamp(value: int64, min: int64, max: int64) -> int64 {
     }
 }
 
-func check_circle_rect_intersection(circle_x: int64, circle_y: int64, circle_radius: int64, rect_x: int64, rect_y: int64, rect_width: int64, rect_height: int64) -> int64 {
+func check_circle_rect_intersection(circle_x: int64, circle_y: int64, circle_radius: int64, rect_x: int64, rect_y: int64, rect_width: int64, rect_height: int64) -> bool {
     let closest_x = clamp(circle_x, rect_x, rect_x + rect_width);
     let closest_y = clamp(circle_y, rect_y, rect_y + rect_height);
 
@@ -16,11 +16,7 @@ func check_circle_rect_intersection(circle_x: int64, circle_y: int64, circle_rad
     let distance_y = circle_y - closest_y;
     let distance_squared = distance_x * distance_x + distance_y * distance_y;
 
-    if (distance_squared < (circle_radius * circle_radius)) {
-        1
-    } else {
-        0
-    }
+    distance_squared < (circle_radius * circle_radius)
 }
 
 func main() {
@@ -50,26 +46,26 @@ func main() {
     mut cpu_current_delay = 0;
     let cpu_reaction_delay = 30;
 
-    mut game_started = 0;
-    mut game_over = 0;
+    mut game_started = false;
+    mut game_over = false;
 
     mut cpu_score = 0;
     mut player_score = 0;
 
-    while (window_should_close() == 0) {
+    while (window_should_close() == false) {
         if (is_key_pressed(257)) { // KEY_ENTER
-            game_started = 1;
+            game_started = true;
         }
 
-        if (game_started and game_over == 0) {
+        if (game_started and game_over == false) {
             begin_drawing();
             clear_background();
 
             if (is_key_pressed(256)) { // KEY_ESCAPE
-                game_over = 1;
+                game_over = true;
             }
 
-            if (game_over == 0) {
+            if (game_over == false) {
                 // Move ball
                 ball_x = ball_x + ball_speed_x;
                 ball_y = ball_y + ball_speed_y;
@@ -126,10 +122,10 @@ func main() {
                     }
                 }
 
-                if (check_circle_rect_intersection(ball_x, ball_y, ball_radius, player_x, player_y, player_width, player_height) == 1) {
+                if (check_circle_rect_intersection(ball_x, ball_y, ball_radius, player_x, player_y, player_width, player_height)) {
                     ball_speed_x = ball_speed_x * -1;
                 }
-                if (check_circle_rect_intersection(ball_x, ball_y, ball_radius, cpu_x, cpu_y, cpu_width, cpu_height) == 1) {
+                if (check_circle_rect_intersection(ball_x, ball_y, ball_radius, cpu_x, cpu_y, cpu_width, cpu_height)) {
                     ball_speed_x = ball_speed_x * -1;
                 }
 
@@ -147,8 +143,8 @@ func main() {
                 draw_number(750 - 20, 20, player_score, 80);
             } else {
                 if (is_key_pressed(257)) { // KEY_ENTER
-                    game_over = 0;
-                    game_started = 0;
+                    game_over = false;
+                    game_started = false;
                     player_score = 0;
                     cpu_score = 0;
                 }
@@ -161,7 +157,7 @@ func main() {
             clear_background();
 
             if (is_key_pressed(257)) { // KEY_ENTER
-                game_started = 1;
+                game_started = true;
             }
             end_drawing();
         }

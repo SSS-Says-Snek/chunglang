@@ -68,8 +68,9 @@ std::string stringify_symbol(const TokenType& symbol, bool verbose) {
 
 std::string stringify_keyword(const TokenType& keyword) {
     static const std::map<TokenType, std::string> token_to_string = {
-        {TokenType::FUNC, "Func"}, {TokenType::LET, "Let"},     {TokenType::MUT, "Mut"},    {TokenType::IF, "If"},
-        {TokenType::ELSE, "Else"}, {TokenType::__OMG, "__OMG"}, {TokenType::WHILE, "While"}};
+        {TokenType::FUNC, "Func"},   {TokenType::LET, "Let"},   {TokenType::MUT, "Mut"},
+        {TokenType::IF, "If"},       {TokenType::ELSE, "Else"}, {TokenType::__OMG, "__OMG"},
+        {TokenType::WHILE, "While"}, {TokenType::TRUE, "True"}, {TokenType::FALSE, "False"}};
     return token_to_string.at(keyword);
 }
 
@@ -92,6 +93,8 @@ std::string stringify_type(const TokenType& type) {
         return "UInt64";
     } else if (type == TokenType::FLOAT64) {
         return "Float64";
+    } else if (type == TokenType::TRUE || type == TokenType::FALSE) {
+        return "Bool";
     } else {
         return "Unknown";
     }
@@ -109,7 +112,8 @@ std::string stringify(const Token& token) {
     } else if (is_keyword(token.type)) {
         return stringify_keyword(token.type);
     } else if (token.type == TokenType::INT64 || token.type == TokenType::UINT64 || token.type == TokenType::FLOAT64 ||
-               token.type == TokenType::STRING || token.type == TokenType::IDENTIFIER) {
+               token.type == TokenType::STRING || token.type == TokenType::TRUE || token.type == TokenType::FALSE ||
+               token.type == TokenType::IDENTIFIER) {
         return token.text;
     } else {
         return "Unknown";

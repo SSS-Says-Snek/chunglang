@@ -14,6 +14,7 @@ enum class Ty : uint8_t {
     INT64,
     FLOAT64,
     STRING,
+    BOOL,
     VOID,
     USER
 };
@@ -32,6 +33,7 @@ public:
     static Type float64;
     static Type string;
     static Type void_;
+    static Type boolean;
 
     static Type user(std::string name) {
         return {Ty::USER, std::move(name)};

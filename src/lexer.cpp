@@ -100,6 +100,10 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                         type = TokenType::OR;
                     } else if (identifier == "not") {
                         type = TokenType::NOT;
+                    } else if (identifier == "true") {
+                        type = TokenType::TRUE;
+                    } else if (identifier == "false") {
+                        type = TokenType::FALSE;
                     }
                 }
 

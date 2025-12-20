@@ -15,6 +15,7 @@ bool is_keyword(TokenType keyword) {
     static const std::vector<TokenType> keywords{
         TokenType::FUNC,   TokenType::LET, TokenType::MUT,  TokenType::__OMG,
         TokenType::RETURN, TokenType::IF,  TokenType::ELSE, TokenType::WHILE,
+        TokenType::TRUE, TokenType::FALSE
     };
 
     return std::find(std::begin(keywords), std::end(keywords), keyword) != std::end(keywords);

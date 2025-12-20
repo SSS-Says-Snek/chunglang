@@ -68,8 +68,10 @@ public:
     }
 
     void match_simple(TokenType type, const std::string& exception_str) {
-        if (current_token().type != type) {
-            throw push_exception(exception_str, current_token());
+        Token current = current_token();
+        if (current.type != type) {
+            auto except =  push_exception(exception_str, current);
+            throw except;
         }
         eat_token();
     }

@@ -159,6 +159,10 @@ std::unique_ptr<ResolvedExpr> Sema::resolve_expr(const ExprAST& expr) {
 std::unique_ptr<ResolvedIfExpr> Sema::resolve_if_expr(const IfExprAST& if_expr) {
     HANDLE_MAKE_VAR(condition, resolve_expr(*if_expr.condition))
     // TODO: Check if condition expr is actually comparable and evaluates
+    if (condition->type != Type::boolean) {
+        push_exception("Condition must be of type bool", condition->loc);
+        return nullptr;
+    }
 
     HANDLE_MAKE_VAR(resolved_body, resolve_block(*if_expr.body))
 
@@ -208,12 +212,29 @@ std::unique_ptr<ResolvedBinaryExpr> Sema::resolve_binary_expr(const BinaryExprAS
     HANDLE_MAKE_VAR(resolved_lhs, resolve_expr(*binary_expr.lhs))
     HANDLE_MAKE_VAR(resolved_rhs, resolve_expr(*binary_expr.rhs))
 
+    if (binary_expr.op == TokenType::AND || binary_expr.op == TokenType::OR) {
+        if (resolved_lhs->type != Type::boolean) {
+            push_exception("Condition must be of type bool", resolved_lhs->loc);
+            return nullptr;
+        } else if (resolved_rhs->type != Type::boolean) {
+            push_exception("Condition must be of type bool", resolved_rhs->loc);
+            return nullptr;
+        }
+    }
+
     if (resolved_lhs->type.ty != resolved_rhs->type.ty) { // TODO: operator up/down, struct, operator overloading?
-        push_exception("Binary expression contains two mismatching types", binary_expr.loc);
+        push_exception("Binary expression contains two mismatching types (" + resolved_lhs->type.name + " on left hand vs " + resolved_rhs->type.name + " on right hand)", binary_expr.loc);
         return nullptr;
     }
 
-    return std::make_unique<ResolvedBinaryExpr>(binary_expr.loc, binary_expr.op, std::move(resolved_lhs),
+    Type type{resolved_lhs->type};
+    if (binary_expr.op == TokenType::EQUAL || binary_expr.op == TokenType::GREATER_THAN ||
+        binary_expr.op == TokenType::LESS_THAN || binary_expr.op == TokenType::GREATER_EQUAL ||
+        binary_expr.op == TokenType::LESS_EQUAL) {
+        type = Type::boolean;
+    }
+
+    return std::make_unique<ResolvedBinaryExpr>(binary_expr.loc, binary_expr.op, type, std::move(resolved_lhs),
                                                 std::move(resolved_rhs));
 }
 
@@ -233,6 +254,12 @@ std::unique_ptr<ResolvedPrimitive> Sema::resolve_primitive(const PrimitiveAST& p
         }
         case TokenType::STRING: {
             return std::make_unique<ResolvedPrimitive>(primitive.loc, primitive.value);
+        }
+        case TokenType::TRUE: {
+            return std::make_unique<ResolvedPrimitive>(primitive.loc, true);
+        }
+        case TokenType::FALSE: {
+            return std::make_unique<ResolvedPrimitive>(primitive.loc, false);
         }
         default:
             llvm_unreachable("Invalid token");
@@ -282,6 +309,10 @@ std::unique_ptr<ResolvedAssignment> Sema::resolve_assignment(const AssignmentAST
 std::unique_ptr<ResolvedWhile> Sema::resolve_while(const WhileAST& while_loop) {
     HANDLE_MAKE_VAR(condition, resolve_expr(*while_loop.condition))
     // TODO: Also check if condition is comparable and evaluate
+    if (condition->type != Type::boolean) {
+        push_exception("Condition must be of type bool", condition->loc);
+        return nullptr;
+    }
 
     HANDLE_MAKE_VAR(resolved_body, resolve_block(*while_loop.body))
 
@@ -432,7 +463,7 @@ std::optional<Type> Sema::resolve_type(Type parsed_type) {
 }
 
 void Sema::generate_std_function(std::vector<std::unique_ptr<ResolvedStmt>>& std_resolved_ast, const std::string& name,
-                            const std::vector<std::pair<std::string, Type>>& params, const Type& return_type) {
+                                 const std::vector<std::pair<std::string, Type>>& params, const Type& return_type) {
     auto loc = SourceLocation{0, 0, 0};
     std::vector<std::unique_ptr<ResolvedParamDeclare>> resolved_params;
     for (const auto& [name, type] : params) {
@@ -455,16 +486,42 @@ std::vector<std::unique_ptr<ResolvedStmt>> Sema::fill_std_functions() {
     generate_std_function(std_resolved_ast, "print_float64", {{"n", Type::float64}}, Type::void_);
 
     // Raylib
-    generate_std_function(std_resolved_ast, "init_window", {{"width", Type::int64}, {"height", Type::int64}}, Type::void_);
+    generate_std_function(std_resolved_ast, "init_window", {{"width", Type::int64}, {"height", Type::int64}},
+                          Type::void_);
     generate_std_function(std_resolved_ast, "set_target_fps", {{"fps", Type::int64}}, Type::void_);
-    generate_std_function(std_resolved_ast, "window_should_close", {}, Type::int64);
+    generate_std_function(std_resolved_ast, "window_should_close", {}, Type::boolean);
     generate_std_function(std_resolved_ast, "begin_drawing", {}, Type::void_);
     generate_std_function(std_resolved_ast, "clear_background", {}, Type::void_);
-    generate_std_function(std_resolved_ast, "draw_circle", {{"x", Type::int64}, {"y", Type::int64}, {"radius", Type::int64}, {"r", Type::int64}, {"g", Type::int64}, {"b", Type::int64}}, Type::void_);
-    generate_std_function(std_resolved_ast, "draw_rectangle", {{"x", Type::int64}, {"y", Type::int64}, {"width", Type::int64}, {"height", Type::int64}, {"r", Type::int64}, {"g", Type::int64}, {"b", Type::int64}}, Type::void_);
-    generate_std_function(std_resolved_ast, "draw_line", {{"x", Type::int64}, {"y", Type::int64}, {"end_x", Type::int64}, {"end_y", Type::int64}, {"r", Type::int64}, {"g", Type::int64}, {"b", Type::int64}}, Type::void_);
-    generate_std_function(std_resolved_ast, "draw_number", {{"x", Type::int64}, {"y", Type::int64}, {"number", Type::int64}, {"font_size", Type::int64}}, Type::void_);
-    generate_std_function(std_resolved_ast, "is_key_pressed", {{"key", Type::int64}}, Type::int64);
+    generate_std_function(std_resolved_ast, "draw_circle",
+                          {{"x", Type::int64},
+                           {"y", Type::int64},
+                           {"radius", Type::int64},
+                           {"r", Type::int64},
+                           {"g", Type::int64},
+                           {"b", Type::int64}},
+                          Type::void_);
+    generate_std_function(std_resolved_ast, "draw_rectangle",
+                          {{"x", Type::int64},
+                           {"y", Type::int64},
+                           {"width", Type::int64},
+                           {"height", Type::int64},
+                           {"r", Type::int64},
+                           {"g", Type::int64},
+                           {"b", Type::int64}},
+                          Type::void_);
+    generate_std_function(std_resolved_ast, "draw_line",
+                          {{"x", Type::int64},
+                           {"y", Type::int64},
+                           {"end_x", Type::int64},
+                           {"end_y", Type::int64},
+                           {"r", Type::int64},
+                           {"g", Type::int64},
+                           {"b", Type::int64}},
+                          Type::void_);
+    generate_std_function(std_resolved_ast, "draw_number",
+                          {{"x", Type::int64}, {"y", Type::int64}, {"number", Type::int64}, {"font_size", Type::int64}},
+                          Type::void_);
+    generate_std_function(std_resolved_ast, "is_key_pressed", {{"key", Type::int64}}, Type::boolean);
     generate_std_function(std_resolved_ast, "end_drawing", {}, Type::void_);
     generate_std_function(std_resolved_ast, "close_window", {}, Type::void_);
 

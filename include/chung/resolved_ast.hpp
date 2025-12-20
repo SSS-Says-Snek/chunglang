@@ -152,9 +152,9 @@ public:
     std::unique_ptr<ResolvedExpr> lhs;
     std::unique_ptr<ResolvedExpr> rhs;
 
-    ResolvedBinaryExpr(SourceLocation loc, TokenType op, std::unique_ptr<ResolvedExpr> lhs,
+    ResolvedBinaryExpr(SourceLocation loc, TokenType op, Type type, std::unique_ptr<ResolvedExpr> lhs,
                        std::unique_ptr<ResolvedExpr> rhs)
-        : ResolvedExpr(loc, lhs->type), op{op}, lhs{std::move(lhs)}, rhs{std::move(rhs)} {
+        : ResolvedExpr(loc, std::move(type)), op{op}, lhs{std::move(lhs)}, rhs{std::move(rhs)} {
     }
 
     // std::string stringify(size_t indent_level) override;
@@ -198,24 +198,26 @@ public:
         int64_t int64{};
         uint64_t uint64;
         double float64;
+        bool boolean;
     };
     std::string string;
 
-    enum ValueType : int8_t { INVALID, INT64, UINT64, FLOAT64, STRING } value_type;
-
-    ResolvedPrimitive(SourceLocation loc) : ResolvedExpr(loc, Type::invalid), value_type{ValueType::INVALID} {
+    ResolvedPrimitive(SourceLocation loc) : ResolvedExpr(loc, Type::invalid) {
     }
     ResolvedPrimitive(SourceLocation loc, int64_t int64)
-        : ResolvedExpr(loc, Type::int64), int64{int64}, value_type{ValueType::INT64} {
+        : ResolvedExpr(loc, Type::int64), int64{int64} {
     }
     ResolvedPrimitive(SourceLocation loc, uint64_t uint64)
-        : ResolvedExpr(loc, Type::uint64), uint64{uint64}, value_type{ValueType::UINT64} {
+        : ResolvedExpr(loc, Type::uint64), uint64{uint64} {
     }
     ResolvedPrimitive(SourceLocation loc, double float64)
-        : ResolvedExpr(loc, Type::float64), float64{float64}, value_type{ValueType::FLOAT64} {
+        : ResolvedExpr(loc, Type::float64), float64{float64} {
     }
     ResolvedPrimitive(SourceLocation loc, std::string string)
-        : ResolvedExpr(loc, Type::string), string{std::move(string)}, value_type{ValueType::STRING} {
+        : ResolvedExpr(loc, Type::boolean), string{std::move(string)} {
+    }
+    ResolvedPrimitive(SourceLocation loc, bool boolean)
+        : ResolvedExpr(loc, Type::boolean), boolean{boolean} {
     }
 
     // std::string stringify(size_t indent_level = 0) override;

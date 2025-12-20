@@ -56,6 +56,8 @@ enum class TokenType : uint8_t {
     UINT64,
     INT64,
     FLOAT64,
+    TRUE,
+    FALSE,
     STRING
 };
 

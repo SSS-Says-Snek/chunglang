@@ -21,6 +21,7 @@ void setup_function(Context& ctx, const std::string& name, const std::vector<std
 void setup_prelude(Context& ctx) {
     llvm::Type* int64_type = llvm::Type::getInt64Ty(ctx.context);
     llvm::Type* void_type = llvm::Type::getVoidTy(ctx.context);
+    llvm::Type* bool_type = llvm::Type::getInt1Ty(ctx.context);
 
     setup_function(ctx, "print", {{"value", llvm::Type::getInt64Ty(ctx.context)}}, llvm::Type::getVoidTy(ctx.context));
     setup_function(ctx, "print_char", {{"value", llvm::Type::getInt64Ty(ctx.context)}}, llvm::Type::getVoidTy(ctx.context));
@@ -29,14 +30,14 @@ void setup_prelude(Context& ctx) {
     // Raylib
     setup_function(ctx, "init_window", {{"width", int64_type}, {"height", int64_type}}, void_type);
     setup_function(ctx, "set_target_fps", {{"fps", int64_type}}, void_type);
-    setup_function(ctx, "window_should_close", {}, int64_type);
+    setup_function(ctx, "window_should_close", {}, bool_type);
     setup_function(ctx, "begin_drawing", {}, void_type);
     setup_function(ctx, "clear_background", {}, void_type);
     setup_function(ctx, "draw_circle", {{"x", int64_type}, {"y", int64_type}, {"radius", int64_type}, {"r", int64_type}, {"g", int64_type}, {"b", int64_type}}, void_type);
     setup_function(ctx, "draw_rectangle", {{"x", int64_type}, {"y", int64_type}, {"width", int64_type}, {"height", int64_type}, {"r", int64_type}, {"g", int64_type}, {"b", int64_type}}, void_type);
     setup_function(ctx, "draw_line", {{"x", int64_type}, {"y", int64_type}, {"end_x", int64_type}, {"end_y", int64_type}, {"r", int64_type}, {"g", int64_type}, {"b", int64_type}}, void_type);
     setup_function(ctx, "draw_number", {{"x", int64_type}, {"y", int64_type}, {"number", int64_type}, {"font_size", int64_type}}, void_type);
-    setup_function(ctx, "is_key_pressed", {{"key", int64_type}}, int64_type);
+    setup_function(ctx, "is_key_pressed", {{"key", int64_type}}, bool_type);
     setup_function(ctx, "end_drawing", {}, void_type);
     setup_function(ctx, "close_window", {}, void_type);
 }
