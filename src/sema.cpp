@@ -411,6 +411,16 @@ std::unique_ptr<ResolvedCall> Sema::resolve_call(const CallAST& call) {
         return nullptr;
     }
 
+    size_t num_args = call.arguments.size();
+    size_t expected_num_args = resolved_function->parameters.size();
+    if (num_args != expected_num_args) {
+        // "Expected x argument(s) in call to function sussy, got y"
+        push_exception("Expected " + std::to_string(expected_num_args) + " argument" +
+                         (expected_num_args != 1 ? "s " : " ") + "in call to function '" + resolved_function->name + "', got " +
+                         std::to_string(num_args), call.loc);
+        return nullptr;
+    }
+
     std::vector<std::unique_ptr<ResolvedExpr>> resolved_arguments;
     for (size_t i = 0; i < call.arguments.size(); i++) {
         const auto& argument = call.arguments[i];

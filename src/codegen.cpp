@@ -291,16 +291,6 @@ llvm::Value* ResolvedCall::codegen(Context& ctx) {
         return nullptr;
     }
 
-    size_t expected_num_args = function->arg_size();
-    if (expected_num_args != arguments.size()) {
-        // "Expected x argument(s) in call to function sussy, got y"
-        std::cout << "Expected " + std::to_string(expected_num_args) + " argument" +
-                         (expected_num_args != 1 ? "s " : " ") + "in call to function '" + callee->name + "', got " +
-                         std::to_string(arguments.size())
-                  << '\n';
-        return nullptr;
-    }
-
     std::vector<llvm::Value*> argument_values;
     for (auto&& arg : arguments) {
         llvm::Value* value = arg->codegen(ctx);
