@@ -75,7 +75,7 @@ bool Sema::add_declaration(ResolvedDecl& decl) {
     const auto& [found_decl, scope_level] = lookup_declaration(decl.name);
 
     if (found_decl && scope_level == 0) { // If already defined within current scope
-        std::cout << "TODOREPLACE but redeclared variable\n";
+        push_exception("Redeclared variable '" + decl.name + "\"", decl.loc);
         return false;
     }
 
@@ -202,6 +202,10 @@ std::unique_ptr<ResolvedUnaryExpr> Sema::resolve_unary_expr(const UnaryExprAST& 
 
     if (resolved_unary_expr->type == Type::void_) {
         push_exception("Expression has type void and is incompatible with the unary operator", unary_expr.loc);
+        return nullptr;
+    }
+    if (unary_expr.op == TokenType::NOT && resolved_unary_expr->type != Type::boolean) {
+        push_exception("'not' expression must be of type bool", resolved_unary_expr->loc);
         return nullptr;
     }
 

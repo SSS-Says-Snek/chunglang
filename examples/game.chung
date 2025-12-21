@@ -11,7 +11,7 @@ func main() {
     init_window(SCREEN_WIDTH, SCREEN_HEIGHT);
     set_target_fps(60);
 
-    while (window_should_close() == false) {
+    while (not window_should_close()) {
         ball_x = ball_x + ball_speed_x;
         ball_y = ball_y + ball_speed_y;
 

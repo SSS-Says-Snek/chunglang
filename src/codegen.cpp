@@ -187,6 +187,10 @@ llvm::Value* ResolvedUnaryExpr::codegen(Context& ctx) {
         } else if (type == Type::float64) {
             return ctx.builder.CreateFNeg(expr_code);
         }
+    } else if (op == TokenType::NOT) {
+        if (type == Type::boolean) {
+            return ctx.builder.CreateNot(expr_code);
+        }
     }
 
     std::cerr << "NOT IMPLEMENTED YET (UnaryExprAST)\n";

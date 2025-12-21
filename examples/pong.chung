@@ -23,6 +23,11 @@ func main() {
     let SCREEN_WIDTH = 1000;
     let SCREEN_HEIGHT = 620;
 
+    let KEY_ENTER = 257;
+    let KEY_ESCAPE = 256;
+    let KEY_DOWN = 264;
+    let KEY_UP = 265;
+
     init_window(SCREEN_WIDTH, SCREEN_HEIGHT);
     set_target_fps(60);
 
@@ -52,20 +57,20 @@ func main() {
     mut cpu_score = 0;
     mut player_score = 0;
 
-    while (window_should_close() == false) {
-        if (is_key_pressed(257)) { // KEY_ENTER
+    while (not window_should_close()) {
+        if (is_key_pressed(KEY_ENTER)) {
             game_started = true;
         }
 
-        if (game_started and game_over == false) {
+        if (game_started and not game_over) {
             begin_drawing();
             clear_background();
 
-            if (is_key_pressed(256)) { // KEY_ESCAPE
+            if (is_key_pressed(KEY_ESCAPE)) {
                 game_over = true;
             }
 
-            if (game_over == false) {
+            if (not game_over) {
                 // Move ball
                 ball_x = ball_x + ball_speed_x;
                 ball_y = ball_y + ball_speed_y;
@@ -74,16 +79,16 @@ func main() {
                 }
 
                 // If hit right edge, CPU wins
-                mut reset_ball = 0;
+                mut reset_ball = false;
                 if (ball_x + ball_radius > SCREEN_WIDTH) {
                     cpu_score = cpu_score + 1;
-                    reset_ball = 1;
+                    reset_ball = true;
                 } else if (ball_x - ball_radius < 0) {
                     player_score = player_score + 1;
-                    reset_ball = 1;
+                    reset_ball = true;
                 }
 
-                if (reset_ball == 1) {
+                if (reset_ball) {
                     ball_x = 500;
                     ball_y = 310;
                     ball_speed_x = 10;
@@ -91,10 +96,10 @@ func main() {
                 }
 
                 // Update player
-                if (is_key_pressed(265)) { // KEY_UP
+                if (is_key_pressed(KEY_UP)) {
                     player_y = player_y - player_speed;
                 }
-                if (is_key_pressed(264)) { // KEY_DOWN
+                if (is_key_pressed(KEY_DOWN)) {
                     player_y = player_y + player_speed;
                 }
 
@@ -142,7 +147,7 @@ func main() {
                 draw_number(250 - 20, 20, cpu_score, 80);
                 draw_number(750 - 20, 20, player_score, 80);
             } else {
-                if (is_key_pressed(257)) { // KEY_ENTER
+                if (is_key_pressed(KEY_ENTER)) {
                     game_over = false;
                     game_started = false;
                     player_score = 0;
@@ -156,7 +161,7 @@ func main() {
 
             clear_background();
 
-            if (is_key_pressed(257)) { // KEY_ENTER
+            if (is_key_pressed(KEY_ENTER)) {
                 game_started = true;
             }
             end_drawing();

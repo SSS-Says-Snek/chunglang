@@ -1,7 +1,6 @@
-func gurt(sigma: int64) {
-
-}
-
 func main() {
-    gurt(3, 2);
+    let e = false;
+    if (not e) {
+        print(-9223372036854775807);
+    }
 }
