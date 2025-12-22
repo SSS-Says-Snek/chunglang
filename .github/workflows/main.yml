@@ -18,6 +18,7 @@ jobs:
           sudo ln -s libLLVMCore.a /lib/x86_64-linux-gnu/libLLVMCore.a
           echo "Done, lsing /lib/x86_64-linux-gnu.."
           ls /lib/x86_64-linux-gnu
+          llvm-config --libs all
         working-directory: ${{ env.LLVM_PATH }}/lib
       - name: Install Apt Packages
         run: sudo apt install -y build-essential libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
