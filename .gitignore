@@ -7,3 +7,6 @@ compile_commands.json
 chungbuild/
 build/
 .cache/
+
+# Python tests
+__pycache__/

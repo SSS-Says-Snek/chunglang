@@ -233,18 +233,18 @@ llvm::Value* ResolvedBinaryExpr::codegen(Context& ctx) {
             }
             break;
         case TokenType::GREATER_THAN:
-            if (type == Type::int64 || type == Type::boolean) {
+            if (lhs->type == Type::int64) {
                 return ctx.builder.CreateICmpSGT(
                     lhs_code, rhs_code); // TODO: ICmpSGT Is only for I-nteger Cmp-arison with S-igned G-reater T-han
-            } else if (type == Type::float64) {
+            } else if (lhs->type == Type::float64) {
                 return ctx.builder.CreateFCmpUGT(lhs_code, rhs_code);
             }
             break;
         case TokenType::LESS_THAN:
-            if (type == Type::int64 || type == Type::boolean) {
+            if (lhs->type == Type::int64) {
                 return ctx.builder.CreateICmpSLT(
                     lhs_code, rhs_code); // TODO: ICmpSGT Is only for I-nteger Cmp-arison with S-igned L-ess T-han
-            } else if (type == Type::float64) {
+            } else if (lhs->type == Type::float64) {
                 return ctx.builder.CreateFCmpULT(lhs_code, rhs_code);
             }
             break;
