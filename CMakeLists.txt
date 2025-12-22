@@ -10,6 +10,7 @@ if(POLICY CMP0075)
 endif()
 
 option(INSTALL_RAYLIB "Set to ON to install raylib directly from CMake" OFF)
+option(IS_GITHUB_ACTIONS "Set to ON if running from GitHub Actions" OFF)
 
 # Locate LLVM
 find_package(LLVM REQUIRED CONFIG)
@@ -63,6 +64,10 @@ target_compile_options(chung PRIVATE -Wall -Wextra -Wpedantic)
 
 # -lLLVM-20 !!!!
 # llvm_map_components_to_libnames(llvm_libs support)
-llvm_config(chung -21)
+if(IS_GITHUB_ACTIONS)
+    llvm_config(support core irreader)
+else()
+    llvm_config(chung -21)
+endif()
 
 target_link_libraries(chung ${llvm_libs})
