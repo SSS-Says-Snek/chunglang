@@ -65,7 +65,7 @@ target_compile_options(chung PRIVATE -Wall -Wextra -Wpedantic)
 # -lLLVM-20 !!!!
 # llvm_map_components_to_libnames(llvm_libs support)
 if(IS_GITHUB_ACTIONS)
-    llvm_config(chung support core irreader)
+    llvm_config(chung core irreader)
 else()
     llvm_config(chung -21)
 endif()
