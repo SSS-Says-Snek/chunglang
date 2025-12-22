@@ -62,7 +62,7 @@ target_include_directories(chung PUBLIC include)
 target_compile_options(chung PRIVATE -Wall -Wextra -Wpedantic)
 
 # -lLLVM-20 !!!!
-# llvm_map_components_to_libnames(llvm_libs -20)
+# llvm_map_components_to_libnames(llvm_libs support)
 llvm_config(chung -21)
 
 target_link_libraries(chung ${llvm_libs})
