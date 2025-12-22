@@ -13,8 +13,6 @@ jobs:
       - name: Symlink LLVM
         run: |
           ls
-          ls /lib
-          ls /lib/x86_64-linux-gnu
           sudo ln -s libLLVM.so.21.1 /lib/libLLVM-21.so
         working-directory: ${{ env.LLVM_PATH }}/lib
       - name: Install Apt Packages
