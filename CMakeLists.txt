@@ -9,8 +9,29 @@ if(POLICY CMP0075)
     cmake_policy(SET CMP0075 NEW)
 endif()
 
+option(INSTALL_RAYLIB "Set to ON to install raylib directly from CMake" OFF)
+
 # Locate LLVM
 find_package(LLVM REQUIRED CONFIG)
+
+# Locate and Install Raylib
+if(INSTALL_RAYLIB)
+    include(FetchContent)
+    set(FETCHCONTENT_QUIET FALSE)
+    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # don't build the supplied examples
+    set(BUILD_GAMES    OFF CACHE BOOL "" FORCE) # don't build the supplied example games
+
+    FetchContent_Declare(
+        raylib
+        GIT_REPOSITORY "https://github.com/raysan5/raylib.git"
+        GIT_TAG "master"
+        GIT_PROGRESS TRUE
+    )
+
+    FetchContent_MakeAvailable(raylib)
+else()
+    find_package(raylib REQUIRED)
+endif()
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
