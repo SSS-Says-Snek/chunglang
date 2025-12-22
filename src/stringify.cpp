@@ -36,6 +36,10 @@ std::string stringify_op(const TokenType& op, bool verbose) {
         {TokenType::LESS_THAN, {"LessThan", "<"}},
         {TokenType::EQUAL, {"Equal", "=="}},
         {TokenType::ASSIGN, {"Assign", "="}},
+        {TokenType::ADD_ASSIGN, {"AddAssign", "+="}},
+        {TokenType::SUB_ASSIGN, {"SubAssign", "-="}},
+        {TokenType::MUL_ASSIGN, {"MulAssign", "*="}},
+        {TokenType::DIV_ASSIGN, {"DivAssign", "/="}},
         {TokenType::AND, {"And", "And"}},
         {TokenType::OR, {"Or", "Or"}},
         {TokenType::NOT, {"Not", "Not"}}};
@@ -96,7 +100,7 @@ std::string stringify_type(const TokenType& type) {
     } else if (type == TokenType::TRUE || type == TokenType::FALSE) {
         return "Bool";
     } else {
-        return "Unknown";
+        return "Unknown Type";
     }
 }
 
@@ -262,6 +266,9 @@ std::string AssignmentAST::stringify(size_t indent_level) {
     std::string string{indent_string(indent_level, "Assignment:")};
 
     string += indent_string(indent_level + 1, "Variable: ") + variable->stringify(indent_level + 2);
+    if (op != TokenType::ASSIGN) {
+        string += indent_string(indent_level + 1, "Operator: " + stringify_op(op, false));
+    }
     string += indent_string(indent_level + 1, "Expression: ") + expr->stringify(indent_level + 2);
 
     return string;

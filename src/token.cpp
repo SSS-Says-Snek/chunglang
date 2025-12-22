@@ -4,19 +4,17 @@
 #include "chung/token.hpp"
 
 bool is_keyword(const std::string& identifier) {
-    static const std::vector<std::string> keyword_identifiers{"func", "let",  "mut",   "__omg", "return",
-                                                              "if",   "else", "while"};
+    static const std::vector<std::string> keyword_identifiers{"func",   "let", "mut",  "__omg",
+                                                              "return", "if",  "else", "while"};
 
     return std::find(std::begin(keyword_identifiers), std::end(keyword_identifiers), identifier) !=
            std::end(keyword_identifiers);
 }
 
 bool is_keyword(TokenType keyword) {
-    static const std::vector<TokenType> keywords{
-        TokenType::FUNC,   TokenType::LET, TokenType::MUT,  TokenType::__OMG,
-        TokenType::RETURN, TokenType::IF,  TokenType::ELSE, TokenType::WHILE,
-        TokenType::TRUE, TokenType::FALSE
-    };
+    static const std::vector<TokenType> keywords{TokenType::FUNC,   TokenType::LET,  TokenType::MUT,  TokenType::__OMG,
+                                                 TokenType::RETURN, TokenType::IF,   TokenType::ELSE, TokenType::WHILE,
+                                                 TokenType::TRUE,   TokenType::FALSE};
 
     return std::find(std::begin(keywords), std::end(keywords), keyword) != std::end(keywords);
 }
@@ -43,7 +41,8 @@ bool is_operator(TokenType op) {
         TokenType::MOD,         TokenType::POW,       TokenType::BITWISE_AND,   TokenType::BITWISE_OR,
         TokenType::BITWISE_NOT, TokenType::ASSIGN,    TokenType::GREATER_EQUAL, TokenType::GREATER_THAN,
         TokenType::LESS_EQUAL,  TokenType::LESS_THAN, TokenType::EQUAL,         TokenType::AND,
-        TokenType::OR, TokenType::NOT};
+        TokenType::OR,          TokenType::NOT,       TokenType::ADD_ASSIGN,    TokenType::SUB_ASSIGN,
+        TokenType::MUL_ASSIGN,  TokenType::DIV_ASSIGN};
 
     return std::find(std::begin(ops), std::end(ops), op) != std::end(ops);
 }

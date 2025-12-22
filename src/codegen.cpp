@@ -340,6 +340,12 @@ llvm::Value* ResolvedVariable::codegen(Context& ctx) {
 }
 
 llvm::Value* ResolvedAssignment::codegen(Context& ctx) {
+    if (op != TokenType::ASSIGN) {
+        ResolvedDecl* declaration = variable->declaration;
+        auto binop = ResolvedBinaryExpr{expr->loc, op, expr->type, std::move(variable), std::move(expr)}; // TODO: Expr->loc is probably incorrect, get the op's loc
+        llvm::Value* expr = binop.codegen(ctx);
+        return ctx.builder.CreateStore(expr, ctx.named_values[declaration]);
+    }
     return ctx.builder.CreateStore(expr->codegen(ctx), ctx.named_values[variable->declaration]);
 }
 

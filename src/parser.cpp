@@ -17,11 +17,11 @@
 
 int get_op_precedence(TokenType op) {
     static const std::unordered_map<TokenType, int> op_lookup{
-        {TokenType::AND, 10}, {TokenType::OR, 10},
-        {TokenType::GREATER_EQUAL, 20}, {TokenType::GREATER_THAN, 20}, {TokenType::LESS_EQUAL, 20},
-        {TokenType::LESS_THAN, 20},     {TokenType::EQUAL, 20},        {TokenType::ADD, 30},
-        {TokenType::SUB, 30},           {TokenType::MUL, 40},          {TokenType::DIV, 40},
-        {TokenType::MOD, 40},           {TokenType::POW, 50}};
+        {TokenType::AND, 10},          {TokenType::OR, 10},         {TokenType::GREATER_EQUAL, 20},
+        {TokenType::GREATER_THAN, 20}, {TokenType::LESS_EQUAL, 20}, {TokenType::LESS_THAN, 20},
+        {TokenType::EQUAL, 20},        {TokenType::ADD, 30},        {TokenType::SUB, 30},
+        {TokenType::MUL, 40},          {TokenType::DIV, 40},        {TokenType::MOD, 40},
+        {TokenType::POW, 50}};
 
     auto result = op_lookup.find(op);
     if (result == op_lookup.end()) {
@@ -243,20 +243,35 @@ std::unique_ptr<BlockAST> Parser::parse_block() {
             default: {
                 auto expr_stmt = parse_expression_statement(false); // Will handle later
                 ExprAST* expr = (dynamic_cast<ExprStmtAST*>(expr_stmt.get())->expr).get();
-                if (current_token().type == TokenType::ASSIGN) {
+                TokenType token_type = current_token().type;
+                if (token_type == TokenType::ASSIGN || token_type == TokenType::ADD_ASSIGN ||
+                    token_type == TokenType::SUB_ASSIGN || token_type == TokenType::MUL_ASSIGN ||
+                    token_type == TokenType::DIV_ASSIGN) {
                     auto* var_decl = dynamic_cast<VariableAST*>(expr);
                     if (!var_decl) {
-                        throw push_exception("Expected variable expression on the LHS of the assignment", current_token());
+                        throw push_exception("Expected variable expression on the LHS of the assignment",
+                                             current_token());
                     }
 
                     std::ignore = expr_stmt.release();
                     SourceLocation loc = next_token().loc;
 
                     // Eat '='
-                    eat_token();
+                    TokenType assign_op = eat_token().type;
+                    TokenType op = assign_op;
+                    if (assign_op == TokenType::ADD_ASSIGN) {
+                        op = TokenType::ADD;
+                    } else if (assign_op == TokenType::SUB_ASSIGN) {
+                        op = TokenType::SUB;
+                    } else if (assign_op == TokenType::MUL_ASSIGN) {
+                        op = TokenType::MUL;
+                    } else if (assign_op == TokenType::DIV_ASSIGN){
+                        op = TokenType::DIV;
+                    }
 
                     auto rhs_expr = parse_expression();
-                    statements.push_back(std::make_unique<AssignmentAST>(loc, std::unique_ptr<VariableAST>(var_decl), std::move(rhs_expr)));
+                    statements.push_back(std::make_unique<AssignmentAST>(loc, std::unique_ptr<VariableAST>(var_decl),
+                                                                         op, std::move(rhs_expr)));
 
                     // Eat ';'
                     match_simple(TokenType::SEMICOLON, "Expected ';' after assignment");
@@ -423,7 +438,7 @@ std::unique_ptr<ExprAST> Parser::parse_if_expr() {
 
 std::unique_ptr<StmtAST> Parser::parse_while() {
     SourceLocation loc = current_token().loc;
-    
+
     // Eat 'while'
     eat_token();
 
@@ -491,7 +506,6 @@ std::unique_ptr<StmtAST> Parser::parse_statement() {
                 case TokenType::WHILE:
                     return parse_while();
                 default: {
-                    std::cout << "You failed me.\n";
                     throw push_exception("You've failed me", current_token());
                 }
             }

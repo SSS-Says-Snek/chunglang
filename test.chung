@@ -1,6 +1,5 @@
 func main() {
-    let e = false;
-    if (not e) {
-        print(-9223372036854775807);
-    }
+    mut e = 1;
+    e += 2;
+    print(e);
 }

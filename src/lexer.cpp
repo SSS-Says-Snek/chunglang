@@ -208,7 +208,10 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                         if (peek() == '>') { // Arrow (->)
                             advance();
                             tokens.push_back(make_token(TokenType::ARROW, cursor - 2, cursor));
-                        } else { // Subtraction
+                        } else if (peek() == '=') { // Sub assign (-=)
+                            advance();
+                            tokens.push_back(make_token(TokenType::SUB_ASSIGN, cursor - 2, cursor));
+                        } else {
                             tokens.push_back(make_token(TokenType::SUB, cursor - 1, cursor));
                         }
                         break;
@@ -222,7 +225,10 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                                     break;
                                 }
                             }
-                        } else { // Division
+                        } else if (peek() == '=') { // Div assign (/=)
+                            advance();
+                            tokens.push_back(make_token(TokenType::DIV_ASSIGN, cursor - 2, cursor));
+                        } else {
                             tokens.push_back(make_token(TokenType::DIV, cursor - 1, cursor));
                         }
                         break;
@@ -256,9 +262,24 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                             tokens.push_back(make_token(TokenType::ASSIGN, cursor - 1, cursor));
                         }
                         break;
-
-                        HANDLE_SIMPLE(TokenType::ADD, '+')
-                        HANDLE_SIMPLE(TokenType::MUL, '*')
+                    case '+':
+                        advance();
+                        if (peek() == '=') {
+                            advance();
+                            tokens.push_back(make_token(TokenType::ADD_ASSIGN, cursor - 2, cursor));
+                        } else {
+                            tokens.push_back(make_token(TokenType::ADD, cursor - 1, cursor));
+                        }
+                        break;
+                    case '*':
+                        advance();
+                        if (peek() == '=') {
+                            advance();
+                            tokens.push_back(make_token(TokenType::MUL_ASSIGN, cursor - 2, cursor));
+                        } else {
+                            tokens.push_back(make_token(TokenType::MUL, cursor - 1, cursor));
+                        }
+                        break;
 
                         HANDLE_SIMPLE(TokenType::OPEN_PARENTHESES, '(')
                         HANDLE_SIMPLE(TokenType::CLOSE_PARENTHESES, ')')

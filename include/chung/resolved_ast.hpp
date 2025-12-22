@@ -204,20 +204,16 @@ public:
 
     ResolvedPrimitive(SourceLocation loc) : ResolvedExpr(loc, Type::invalid) {
     }
-    ResolvedPrimitive(SourceLocation loc, int64_t int64)
-        : ResolvedExpr(loc, Type::int64), int64{int64} {
+    ResolvedPrimitive(SourceLocation loc, int64_t int64) : ResolvedExpr(loc, Type::int64), int64{int64} {
     }
-    ResolvedPrimitive(SourceLocation loc, uint64_t uint64)
-        : ResolvedExpr(loc, Type::uint64), uint64{uint64} {
+    ResolvedPrimitive(SourceLocation loc, uint64_t uint64) : ResolvedExpr(loc, Type::uint64), uint64{uint64} {
     }
-    ResolvedPrimitive(SourceLocation loc, double float64)
-        : ResolvedExpr(loc, Type::float64), float64{float64} {
+    ResolvedPrimitive(SourceLocation loc, double float64) : ResolvedExpr(loc, Type::float64), float64{float64} {
     }
     ResolvedPrimitive(SourceLocation loc, std::string string)
         : ResolvedExpr(loc, Type::boolean), string{std::move(string)} {
     }
-    ResolvedPrimitive(SourceLocation loc, bool boolean)
-        : ResolvedExpr(loc, Type::boolean), boolean{boolean} {
+    ResolvedPrimitive(SourceLocation loc, bool boolean) : ResolvedExpr(loc, Type::boolean), boolean{boolean} {
     }
 
     // std::string stringify(size_t indent_level = 0) override;
@@ -238,12 +234,13 @@ public:
 
 class ResolvedAssignment : public ResolvedStmt {
 public:
+    TokenType op;
     std::unique_ptr<ResolvedVariable> variable;
     std::unique_ptr<ResolvedExpr> expr;
 
-    ResolvedAssignment(SourceLocation loc, std::unique_ptr<ResolvedVariable> variable,
+    ResolvedAssignment(SourceLocation loc, std::unique_ptr<ResolvedVariable> variable, TokenType op,
                        std::unique_ptr<ResolvedExpr> expr)
-        : ResolvedStmt(loc), variable{std::move(variable)}, expr{std::move(expr)} {
+        : ResolvedStmt(loc), variable{std::move(variable)}, op{op}, expr{std::move(expr)} {
     }
 
     llvm::Value* codegen(Context& ctx) override;

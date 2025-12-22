@@ -24,6 +24,10 @@ enum class TokenType : uint8_t {
     BITWISE_OR,
     BITWISE_NOT,
     ASSIGN,
+    ADD_ASSIGN,
+    SUB_ASSIGN,
+    MUL_ASSIGN,
+    DIV_ASSIGN,
 
     GREATER_THAN,
     LESS_THAN,

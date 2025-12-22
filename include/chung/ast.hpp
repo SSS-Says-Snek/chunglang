@@ -190,11 +190,13 @@ public:
 
 class AssignmentAST : public StmtAST {
 public:
+    TokenType op;
+
     std::unique_ptr<VariableAST> variable;
     std::unique_ptr<ExprAST> expr;
 
-    AssignmentAST(SourceLocation loc, std::unique_ptr<VariableAST> variable, std::unique_ptr<ExprAST> expr)
-        : StmtAST(loc), variable{std::move(variable)}, expr{std::move(expr)} {
+    AssignmentAST(SourceLocation loc, std::unique_ptr<VariableAST> variable, TokenType op, std::unique_ptr<ExprAST> expr)
+        : StmtAST(loc), variable{std::move(variable)}, op{op}, expr{std::move(expr)} {
     }
 
     std::string stringify(size_t indent_level = 0) override;

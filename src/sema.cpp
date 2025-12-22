@@ -5,7 +5,6 @@
 #include "chung/utils/ansi.hpp"
 #include "chung/sema.hpp"
 #include <llvm/Support/ErrorHandling.h>
-#include <iostream>
 #include <memory>
 
 #define HANDLE_MAKE_VAR(identifier, initialization)                                                                    \
@@ -307,7 +306,7 @@ std::unique_ptr<ResolvedAssignment> Sema::resolve_assignment(const AssignmentAST
         return nullptr;
     }
 
-    return std::make_unique<ResolvedAssignment>(assignment.loc, std::move(resolved_variable), std::move(resolved_expr));
+    return std::make_unique<ResolvedAssignment>(assignment.loc, std::move(resolved_variable), assignment.op, std::move(resolved_expr));
 }
 
 std::unique_ptr<ResolvedWhile> Sema::resolve_while(const WhileAST& while_loop) {
