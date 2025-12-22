@@ -13,7 +13,11 @@ jobs:
       - name: Symlink LLVM
         run: |
           ls
-          sudo ln -s libLLVM.so.21.1 /lib/libLLVM-21.so
+          sudo ln -s libLLVMIRReader.a /lib/x86_64-linux-gnu/libLLVMIRReader.a
+          sudo ln -s libLLVMSupport.a /lib/x86_64-linux-gnu/libLLVMSupport.a
+          sudo ln -s libLLVMCore.a /lib/x86_64-linux-gnu/libLLVMCore.a
+          echo "Done, lsing /lib/x86_64-linux-gnu.."
+          ls /lib/x86_64-linux-gnu
         working-directory: ${{ env.LLVM_PATH }}/lib
       - name: Install Apt Packages
         run: sudo apt install -y build-essential libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
