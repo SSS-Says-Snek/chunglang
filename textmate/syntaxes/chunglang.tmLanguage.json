@@ -196,7 +196,7 @@
       "patterns": [
         {
           "name": "keyword.operator.logical.chung",
-          "match": "(\\|\\||&&|!)"
+          "match": "(and|or|not)"
         },
         {
           "name": "keyword.operator.comparison.chung",

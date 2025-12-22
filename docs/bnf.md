@@ -38,9 +38,9 @@
                | <if-expression>
                | <block>
 
-<logical-or> ::= <logical-and> ( "||" <logical-and> )*
+<logical-or> ::= <logical-and> ( "or" <logical-and> )*
 
-<logical-and> ::= <equality> ( "&&" <equality> )*
+<logical-and> ::= <equality> ( "and" <equality> )*
 
 <equality> ::= <comparison> ( ( "==" | "!=" ) <comparison> )*
 
@@ -50,7 +50,7 @@
 
 <multiplicative> ::= <unary> ( ( "*" | "/" | "%" ) <unary> )*
 
-<unary> ::= ( "!" | "-" ) <unary>
+<unary> ::= ( "not" | "-" ) <unary>
           | <call>
 
 <call> ::= <primary> ( "(" <argument-list> ")" )*
