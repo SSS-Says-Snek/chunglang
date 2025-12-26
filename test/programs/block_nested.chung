@@ -1,0 +1,6 @@
+func main() {
+    print({
+        let gurt = 2;
+        gurt
+    });
+}

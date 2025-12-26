@@ -1,0 +1,7 @@
+func return_three() -> int64 {
+    return 3;
+}
+
+func main() {
+    print(return_three());
+}

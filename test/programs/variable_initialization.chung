@@ -1,0 +1,7 @@
+func main() {
+    let a = 1;
+    mut b = 2;
+
+    print(a);
+    print(b);
+}
