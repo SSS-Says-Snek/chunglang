@@ -10,7 +10,9 @@ def run_program(path: Path, *args):
     return result.stdout, result.stderr, result.returncode
 
 def compile(path: str):
-    return run_program(CHUNG_PATH, "parse", path)
+    stdout, stderr, returncode = run_program(CHUNG_PATH, "parse", path)
+    assert returncode == 0, "Chunglang compiler failed with nonzero exit code"
+    return stdout, stderr, returncode
 
 def run_compiled_program():
     return run_program(COMPILED_PATH)

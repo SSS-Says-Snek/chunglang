@@ -212,3 +212,12 @@ public:
 
     std::string stringify(size_t indent_level = 0) override;
 };
+
+class ReturnAST : public StmtAST {
+public:
+    std::unique_ptr<ExprAST> value;
+
+    ReturnAST(SourceLocation loc, std::unique_ptr<ExprAST> value) : StmtAST(loc), value{std::move(value)} {}
+
+    std::string stringify(size_t indent_level = 0) override;
+};

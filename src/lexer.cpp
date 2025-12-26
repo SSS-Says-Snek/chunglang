@@ -88,6 +88,12 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                         type = TokenType::WHILE;
                     } else if (identifier == "__omg") {
                         type = TokenType::__OMG;
+                    } else if (identifier == "return") {
+                        type = TokenType::RETURN;
+                    } else if (identifier == "true") {
+                        type = TokenType::TRUE;
+                    } else if (identifier == "false") {
+                        type = TokenType::FALSE;
                     } else {
                         // Uh oh we haven't implemented it yet
                         std::cout << "Keyword NOT implemented yet";
@@ -100,10 +106,6 @@ std::pair<std::vector<Token>, std::vector<LexException>> Lexer::lex() {
                         type = TokenType::OR;
                     } else if (identifier == "not") {
                         type = TokenType::NOT;
-                    } else if (identifier == "true") {
-                        type = TokenType::TRUE;
-                    } else if (identifier == "false") {
-                        type = TokenType::FALSE;
                     }
                 }
 

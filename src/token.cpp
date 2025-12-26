@@ -5,7 +5,7 @@
 
 bool is_keyword(const std::string& identifier) {
     static const std::vector<std::string> keyword_identifiers{"func",   "let", "mut",  "__omg",
-                                                              "return", "if",  "else", "while"};
+                                                              "return", "if",  "else", "while", "true", "false"};
 
     return std::find(std::begin(keyword_identifiers), std::end(keyword_identifiers), identifier) !=
            std::end(keyword_identifiers);
@@ -45,4 +45,10 @@ bool is_operator(TokenType op) {
         TokenType::MUL_ASSIGN,  TokenType::DIV_ASSIGN};
 
     return std::find(std::begin(ops), std::end(ops), op) != std::end(ops);
+}
+
+bool is_statement(TokenType statement) {
+    static const std::vector<TokenType> statements{TokenType::LET, TokenType::MUT, TokenType::RETURN, TokenType::FUNC, TokenType::WHILE};
+
+    return std::find(std::begin(statements), std::end(statements), statement) != std::end(statements);
 }

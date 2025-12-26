@@ -118,6 +118,10 @@ std::unique_ptr<ResolvedStmt> Sema::resolve_stmt(const StmtAST& stmt) {
         return resolve_while(*while_loop);
     }
 
+    if (const auto* return_stmt = dynamic_cast<const ReturnAST*>(&stmt)) {
+        return resolve_return(*return_stmt);
+    }
+
     // Every stmt should be covered already; if not, implementation error
     llvm_unreachable("Unhandled statement in Sema::resolve_stmt");
 }
@@ -226,7 +230,9 @@ std::unique_ptr<ResolvedBinaryExpr> Sema::resolve_binary_expr(const BinaryExprAS
     }
 
     if (resolved_lhs->type.ty != resolved_rhs->type.ty) { // TODO: operator up/down, struct, operator overloading?
-        push_exception("Binary expression contains two mismatching types (" + resolved_lhs->type.name + " on left hand vs " + resolved_rhs->type.name + " on right hand)", binary_expr.loc);
+        push_exception("Binary expression contains two mismatching types (" + resolved_lhs->type.name +
+                           " on left hand vs " + resolved_rhs->type.name + " on right hand)",
+                       binary_expr.loc);
         return nullptr;
     }
 
@@ -306,7 +312,8 @@ std::unique_ptr<ResolvedAssignment> Sema::resolve_assignment(const AssignmentAST
         return nullptr;
     }
 
-    return std::make_unique<ResolvedAssignment>(assignment.loc, std::move(resolved_variable), assignment.op, std::move(resolved_expr));
+    return std::make_unique<ResolvedAssignment>(assignment.loc, std::move(resolved_variable), assignment.op,
+                                                std::move(resolved_expr));
 }
 
 std::unique_ptr<ResolvedWhile> Sema::resolve_while(const WhileAST& while_loop) {
@@ -320,6 +327,32 @@ std::unique_ptr<ResolvedWhile> Sema::resolve_while(const WhileAST& while_loop) {
     HANDLE_MAKE_VAR(resolved_body, resolve_block(*while_loop.body))
 
     return std::make_unique<ResolvedWhile>(while_loop.loc, std::move(condition), std::move(resolved_body));
+}
+
+std::unique_ptr<ResolvedReturn> Sema::resolve_return(const ReturnAST& return_stmt) {
+    if (return_stmt.value) {
+        HANDLE_MAKE_VAR(resolved_value, resolve_expr(*return_stmt.value));
+
+        if (current_function->type == Type::void_ && resolved_value->type != Type::void_) {
+            push_exception("Void function '" + current_function->name + "' cannot return a value", resolved_value->loc);
+        }
+        if (resolved_value->type != current_function->type) {
+            push_exception("Function '" + current_function->name + "' return statement's type of " +
+                               resolved_value->type.name + " does not match return type of " +
+                               current_function->type.name,
+                           resolved_value->loc);
+        }
+
+        return std::make_unique<ResolvedReturn>(return_stmt.loc, std::move(resolved_value));
+    }
+
+    // Just plain-old "return;"
+    if (current_function->type != Type::void_) {
+        push_exception("Return statement cannot return empty value, does not match function '" + current_function->name + "' return type of " +
+                           current_function->type.name,
+                       return_stmt.loc);
+    }
+    return std::make_unique<ResolvedReturn>(return_stmt.loc, nullptr);
 }
 
 std::unique_ptr<ResolvedFunction> Sema::resolve_function(const FunctionAST& function) {
@@ -419,8 +452,9 @@ std::unique_ptr<ResolvedCall> Sema::resolve_call(const CallAST& call) {
     if (num_args != expected_num_args) {
         // "Expected x argument(s) in call to function sussy, got y"
         push_exception("Expected " + std::to_string(expected_num_args) + " argument" +
-                         (expected_num_args != 1 ? "s " : " ") + "in call to function '" + resolved_function->name + "', got " +
-                         std::to_string(num_args), call.loc);
+                           (expected_num_args != 1 ? "s " : " ") + "in call to function '" + resolved_function->name +
+                           "', got " + std::to_string(num_args),
+                       call.loc);
         return nullptr;
     }
 
@@ -429,6 +463,7 @@ std::unique_ptr<ResolvedCall> Sema::resolve_call(const CallAST& call) {
         const auto& argument = call.arguments[i];
 
         HANDLE_MAKE_VAR(resolved_expr, resolve_expr(*argument))
+        // TODO: Check against more complex types (E.g functions and classes)
         if (resolved_expr->type.ty != resolved_function->parameters[i]->type.ty) {
             push_exception("Argument and parameter types do not match; expected " +
                                resolved_function->parameters[i]->type.name + ", found " + resolved_expr->type.name,
@@ -575,8 +610,7 @@ std::pair<std::vector<std::unique_ptr<ResolvedStmt>>, std::vector<std::unique_pt
         return {};
     }
 
-    // Second pass
-
+    // Second pass: Actually check function body now
     for (size_t i = 0; i < resolved_ast.size(); i++) {
         std::unique_ptr<ResolvedStmt>& stmt = resolved_ast[i];
         if (auto* function = dynamic_cast<ResolvedFunction*>(stmt.get())) {
@@ -596,13 +630,15 @@ std::pair<std::vector<std::unique_ptr<ResolvedStmt>>, std::vector<std::unique_pt
             }
 
             if (resolved_body->return_value) {
-                if (function->type == Type::void_) {
-                    push_exception("Void function '" + function->name +"' cannot return a value", resolved_body->loc);
+                // TODO: Catch body return value type correctly
+                // E.g currently, if a function ends with a void function but forgets a semicolon, it's incorporated as body's return type, bypassing checks
+                if (function->type == Type::void_ && resolved_body->return_value->type != Type::void_) {
+                    push_exception("Void function '" + function->name + "' cannot return a value", resolved_body->loc);
                 }
                 if (resolved_body->return_value->type != function->type) {
                     push_exception("Function '" + function->name + "' body's type of " +
-                                   resolved_body->return_value->type.name + " does not match return type of " +
-                                   function->type.name,
+                                       resolved_body->return_value->type.name + " does not match return type of " +
+                                       function->type.name,
                                    resolved_body->loc);
                 }
             }

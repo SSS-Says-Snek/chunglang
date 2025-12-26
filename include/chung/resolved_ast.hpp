@@ -257,3 +257,12 @@ public:
 
     llvm::Value* codegen(Context& ctx) override;
 };
+
+class ResolvedReturn : public ResolvedStmt {
+public:
+    std::unique_ptr<ResolvedExpr> value;
+
+    ResolvedReturn(SourceLocation loc, std::unique_ptr<ResolvedExpr> value) : ResolvedStmt(loc), value{std::move(value)} {}
+
+    llvm::Value* codegen(Context& ctx) override;
+};

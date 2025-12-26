@@ -230,70 +230,63 @@ std::unique_ptr<BlockAST> Parser::parse_block() {
             throw push_exception("Expected '}', got EOF. You probably forgot to close the block", current_token());
         }
 
-        switch (current_token().type) {
-            case TokenType::LET:
-            case TokenType::MUT:
-            case TokenType::RETURN:
-            case TokenType::FUNC:
-                statements.push_back(parse_statement());
-                continue;
-            case TokenType::WHILE:
-                statements.push_back(parse_statement());
-                continue;
-            default: {
-                auto expr_stmt = parse_expression_statement(false); // Will handle later
-                ExprAST* expr = (dynamic_cast<ExprStmtAST*>(expr_stmt.get())->expr).get();
-                TokenType token_type = current_token().type;
-                if (token_type == TokenType::ASSIGN || token_type == TokenType::ADD_ASSIGN ||
-                    token_type == TokenType::SUB_ASSIGN || token_type == TokenType::MUL_ASSIGN ||
-                    token_type == TokenType::DIV_ASSIGN) {
-                    auto* var_decl = dynamic_cast<VariableAST*>(expr);
-                    if (!var_decl) {
-                        throw push_exception("Expected variable expression on the LHS of the assignment",
-                                             current_token());
-                    }
+        if (is_statement(current_token().type)) {
+            statements.push_back(parse_statement());
+            continue;
+        }
 
-                    std::ignore = expr_stmt.release();
-                    SourceLocation loc = next_token().loc;
-
-                    // Eat '='
-                    TokenType assign_op = eat_token().type;
-                    TokenType op = assign_op;
-                    if (assign_op == TokenType::ADD_ASSIGN) {
-                        op = TokenType::ADD;
-                    } else if (assign_op == TokenType::SUB_ASSIGN) {
-                        op = TokenType::SUB;
-                    } else if (assign_op == TokenType::MUL_ASSIGN) {
-                        op = TokenType::MUL;
-                    } else if (assign_op == TokenType::DIV_ASSIGN){
-                        op = TokenType::DIV;
-                    }
-
-                    auto rhs_expr = parse_expression();
-                    statements.push_back(std::make_unique<AssignmentAST>(loc, std::unique_ptr<VariableAST>(var_decl),
-                                                                         op, std::move(rhs_expr)));
-
-                    // Eat ';'
-                    match_simple(TokenType::SEMICOLON, "Expected ';' after assignment");
-                    continue;
-                }
-
-                TokenType token = current_token().type;
-                if (token == TokenType::SEMICOLON) {
-                    // Eat ';'
-                    eat_token();
-                    statements.push_back(std::move(expr_stmt));
-                } else if (token == TokenType::CLOSE_BRACES) {
-                    // No semicolon, yes } -> ending return block;
-                    return_value = std::move(dynamic_cast<ExprStmtAST*>(expr_stmt.get())->expr); // Yikes
-                    break;
-                } else if (dynamic_cast<IfExprAST*>(
-                               expr)) { // Dynamic cast to see which expressions don't need semicolons (e.g if expr)
-                    statements.push_back(std::move(expr_stmt));
-                } else {
-                    throw push_exception("Expected ';' after expression", current_token());
-                }
+        // Otherwise, we try to parse an expression statement
+        auto expr_stmt = parse_expression_statement(false); // Will handle later
+        ExprAST* expr = (dynamic_cast<ExprStmtAST*>(expr_stmt.get())->expr).get();
+        TokenType token_type = current_token().type;
+        if (token_type == TokenType::ASSIGN || token_type == TokenType::ADD_ASSIGN ||
+            token_type == TokenType::SUB_ASSIGN || token_type == TokenType::MUL_ASSIGN ||
+            token_type == TokenType::DIV_ASSIGN) {
+            auto* var_decl = dynamic_cast<VariableAST*>(expr);
+            if (!var_decl) {
+                throw push_exception("Expected variable expression on the LHS of the assignment",
+                                     current_token());
             }
+
+            std::ignore = expr_stmt.release();
+            SourceLocation loc = next_token().loc;
+
+            // Eat '='
+            TokenType assign_op = eat_token().type;
+            TokenType op = assign_op;
+            if (assign_op == TokenType::ADD_ASSIGN) {
+                op = TokenType::ADD;
+            } else if (assign_op == TokenType::SUB_ASSIGN) {
+                op = TokenType::SUB;
+            } else if (assign_op == TokenType::MUL_ASSIGN) {
+                op = TokenType::MUL;
+            } else if (assign_op == TokenType::DIV_ASSIGN){
+                op = TokenType::DIV;
+            }
+
+            auto rhs_expr = parse_expression();
+            statements.push_back(std::make_unique<AssignmentAST>(loc, std::unique_ptr<VariableAST>(var_decl),
+                                                                 op, std::move(rhs_expr)));
+
+            // Eat ';'
+            match_simple(TokenType::SEMICOLON, "Expected ';' after assignment");
+            continue;
+        }
+
+        TokenType token = current_token().type;
+        if (token == TokenType::SEMICOLON) {
+            // Eat ';'
+            eat_token();
+            statements.push_back(std::move(expr_stmt));
+        } else if (token == TokenType::CLOSE_BRACES) {
+            // No semicolon, yes } -> ending return block;
+            return_value = std::move(dynamic_cast<ExprStmtAST*>(expr_stmt.get())->expr); // Yikes
+            break;
+        } else if (dynamic_cast<IfExprAST*>(
+                       expr)) { // Dynamic cast to see which expressions don't need semicolons (e.g if expr)
+            statements.push_back(std::move(expr_stmt));
+        } else {
+            throw push_exception("Expected ';' after expression", current_token());
         }
     }
 
@@ -451,6 +444,23 @@ std::unique_ptr<StmtAST> Parser::parse_while() {
     return std::make_unique<WhileAST>(loc, std::move(condition), std::move(body));
 }
 
+std::unique_ptr<StmtAST> Parser::parse_return() {
+    SourceLocation loc = current_token().loc;
+
+    // Eat 'return'
+    eat_token();
+
+    std::unique_ptr<ExprAST> value;
+    if (current_token().type != TokenType::SEMICOLON) {
+        value = parse_expression();
+    }
+
+    // Eat ';'
+    match_simple(TokenType::SEMICOLON, "Expected ';' after return statement");
+
+    return std::make_unique<ReturnAST>(loc, std::move(value));
+}
+
 std::unique_ptr<StmtAST> Parser::parse_omg() {
     // Eat '__omg'
     eat_token();
@@ -505,6 +515,8 @@ std::unique_ptr<StmtAST> Parser::parse_statement() {
                     return parse_omg();
                 case TokenType::WHILE:
                     return parse_while();
+                case TokenType::RETURN:
+                    return parse_return();
                 default: {
                     throw push_exception("You've failed me", current_token());
                 }

@@ -90,3 +90,4 @@ bool is_keyword(const std::string& identifier);
 bool is_keyword(TokenType keyword);
 bool is_symbol(TokenType symbol);
 bool is_operator(TokenType op);
+bool is_statement(TokenType statement);

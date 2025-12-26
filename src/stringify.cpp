@@ -72,9 +72,10 @@ std::string stringify_symbol(const TokenType& symbol, bool verbose) {
 
 std::string stringify_keyword(const TokenType& keyword) {
     static const std::map<TokenType, std::string> token_to_string = {
-        {TokenType::FUNC, "Func"},   {TokenType::LET, "Let"},   {TokenType::MUT, "Mut"},
-        {TokenType::IF, "If"},       {TokenType::ELSE, "Else"}, {TokenType::__OMG, "__OMG"},
-        {TokenType::WHILE, "While"}, {TokenType::TRUE, "True"}, {TokenType::FALSE, "False"}};
+        {TokenType::FUNC, "Func"},    {TokenType::LET, "Let"},   {TokenType::MUT, "Mut"},
+        {TokenType::IF, "If"},        {TokenType::ELSE, "Else"}, {TokenType::__OMG, "__OMG"},
+        {TokenType::WHILE, "While"},  {TokenType::TRUE, "True"}, {TokenType::FALSE, "False"},
+        {TokenType::RETURN, "Return"}};
     return token_to_string.at(keyword);
 }
 
@@ -173,6 +174,17 @@ std::string WhileAST::stringify(size_t indent_level) {
     string += indent_string(indent_level + 1, "Body:");
     string += body->stringify(indent_level + 2);
 
+    return string;
+}
+
+std::string ReturnAST::stringify(size_t indent_level) {
+    std::string string{indent_string(indent_level, "Return Statement")};
+
+    if (value) {
+        string += value->stringify(indent_level + 1);
+    } else {
+        string += indent_string(indent_level + 1, "Early Return");
+    }
     return string;
 }
 

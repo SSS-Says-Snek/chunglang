@@ -369,3 +369,13 @@ llvm::Value* ResolvedWhile::codegen(Context& ctx) {
     ctx.builder.SetInsertPoint(exit);
     return nullptr;
 }
+
+llvm::Value* ResolvedReturn::codegen(Context& ctx) {
+    if (value) {
+        ctx.builder.CreateRet(value->codegen(ctx));
+    } else {
+        ctx.builder.CreateRet(nullptr);
+    }
+
+    return nullptr;
+}

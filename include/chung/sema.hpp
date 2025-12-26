@@ -53,6 +53,7 @@ public:
     std::unique_ptr<ResolvedVariable> resolve_variable(const VariableAST& variable);
     std::unique_ptr<ResolvedAssignment> resolve_assignment(const AssignmentAST& assignment);
     std::unique_ptr<ResolvedWhile> resolve_while(const WhileAST& while_loop);
+    std::unique_ptr<ResolvedReturn> resolve_return(const ReturnAST& return_stmt);
 
     static std::unique_ptr<ResolvedOmg> resolve_omg(const OmgAST& block);
     static std::unique_ptr<ResolvedPrimitive> resolve_primitive(const PrimitiveAST& primitive);
