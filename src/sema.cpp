@@ -595,11 +595,16 @@ std::pair<std::vector<std::unique_ptr<ResolvedStmt>>, std::vector<std::unique_pt
                 continue;
             }
 
-            if (resolved_body->return_value && resolved_body->return_value->type != function->type) {
-                push_exception("Function '" + function->name + "' body's type of " +
+            if (resolved_body->return_value) {
+                if (function->type == Type::void_) {
+                    push_exception("Void function '" + function->name +"' cannot return a value", resolved_body->loc);
+                }
+                if (resolved_body->return_value->type != function->type) {
+                    push_exception("Function '" + function->name + "' body's type of " +
                                    resolved_body->return_value->type.name + " does not match return type of " +
                                    function->type.name,
-                               resolved_body->loc);
+                                   resolved_body->loc);
+                }
             }
 
             current_function->body = std::move(resolved_body);

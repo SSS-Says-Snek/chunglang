@@ -1,8 +1,8 @@
 func add_one(param: int64) -> int64 {
-    mut goon = 3;
-    goon = param * goon;
-    if (goon > 5) {
-        goon
+    mut example = 3;
+    example *= param;
+    if (example > 5) {
+        example
     } else {
         param - 1
     }
@@ -33,15 +33,9 @@ func aa(param: int64) {
 }
 
 func test_if_exprs(param: int64) {
-    let goon = if (param > 3) {
-        3
-    } else {
-        30000
-    };
-
     print({
-        let goon2 = goon + 1;
-        goon2
+        let gurt = param + 1;
+        gurt
     });
 }
 
