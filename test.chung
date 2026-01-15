@@ -1,7 +1,3 @@
-func gurt() -> int64 {
-    return 3;
-}
-
 func main() {
-    print(gurt);
+    let e = "gurtrude😀";
 }

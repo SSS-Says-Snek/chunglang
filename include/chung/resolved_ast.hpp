@@ -211,7 +211,7 @@ public:
     ResolvedPrimitive(SourceLocation loc, double float64) : ResolvedExpr(loc, Type::float64), float64{float64} {
     }
     ResolvedPrimitive(SourceLocation loc, std::string string)
-        : ResolvedExpr(loc, Type::boolean), string{std::move(string)} {
+        : ResolvedExpr(loc, Type::string), string{std::move(string)} {
     }
     ResolvedPrimitive(SourceLocation loc, bool boolean) : ResolvedExpr(loc, Type::boolean), boolean{boolean} {
     }
