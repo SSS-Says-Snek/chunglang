@@ -159,7 +159,7 @@ int run_parse(std::vector<std::string>& args) {
 
         llvm::TargetOptions options;
 
-        auto rm = std::optional<llvm::Reloc::Model>();
+        auto rm = std::optional<llvm::Reloc::Model>(llvm::Reloc::PIC_);
         auto* target_machine = target->createTargetMachine(triple, cpu, features, options, rm);
 
         ctx.module->setDataLayout(target_machine->createDataLayout());
@@ -189,6 +189,11 @@ int run_parse(std::vector<std::string>& args) {
 
         pass.run(*ctx.module);
         dest.flush();
+
+        if (llvm::verifyModule(*ctx.module, &llvm::errs())) {
+            llvm::errs() << "Internal error: generated invalid IR\n";
+            std::exit(1);
+        }
 
         // IDK /shrug
         // system("clang++ src/library/prelude.cpp -Iinclude -c -o chungbuild/prelude.o");

@@ -22,10 +22,7 @@ using str = struct {
     int64_t len;
 };
 
-void print_string(str gurt) {
-    printf("%ld", gurt.len);
-    printf("%s", gurt.sigma);
-}
+void print_string(const str* s) { fwrite(s->sigma, 1, (size_t)s->len, stdout); }
 
 // Raylib
 void init_window(int64_t width, int64_t height) {

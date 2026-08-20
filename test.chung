@@ -1,4 +1,8 @@
+func sigma() -> string {
+    return "gurt2";
+}
+
 func main() {
     let e = "gurt";
-    print_string(e);
+    print_string(sigma());
 }

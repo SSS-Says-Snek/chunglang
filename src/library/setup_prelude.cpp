@@ -28,7 +28,8 @@ void setup_prelude(Context& ctx) {
     setup_function(ctx, "print", {{"value", llvm::Type::getInt64Ty(ctx.context)}}, llvm::Type::getVoidTy(ctx.context));
     setup_function(ctx, "print_char", {{"value", llvm::Type::getInt64Ty(ctx.context)}}, llvm::Type::getVoidTy(ctx.context));
     setup_function(ctx, "print_float64", {{"value", llvm::Type::getDoubleTy(ctx.context)}}, llvm::Type::getVoidTy(ctx.context));
-    setup_function(ctx, "print_string", {{"value", ctx.llvm_types.at(Type::string)}}, llvm::Type::getVoidTy(ctx.context));
+    // setup_function(ctx, "print_string", {{"value", ctx.llvm_types.at(Type::string)}}, llvm::Type::getVoidTy(ctx.context));
+    setup_function(ctx, "print_string", {{"value", llvm::PointerType::get(ctx.context, 0)}}, void_type);
 
     // Raylib
     setup_function(ctx, "init_window", {{"width", int64_type}, {"height", int64_type}}, void_type);
