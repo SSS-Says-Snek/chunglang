@@ -15,6 +15,10 @@ option(IS_GITHUB_ACTIONS "Set to ON if running from GitHub Actions" OFF)
 # Locate LLVM
 find_package(LLVM REQUIRED CONFIG)
 
+if(LLVM_VERSION_MAJOR LESS 21)
+    message(FATAL_ERROR "Chunglang requires LLVM 21 or newer, found ${LLVM_PACKAGE_VERSION} in ${LLVM_DIR}")
+endif()
+
 # Locate and Install Raylib
 if(INSTALL_RAYLIB)
     include(FetchContent)
@@ -62,12 +66,19 @@ add_executable(chung
 target_include_directories(chung PUBLIC include)
 target_compile_options(chung PRIVATE -Wall -Wextra -Wpedantic)
 
-# -lLLVM-20 !!!!
-# llvm_map_components_to_libnames(llvm_libs support)
-if(IS_GITHUB_ACTIONS)
-    llvm_config(chung core irreader)
+set(CHUNG_LLVM_COMPONENTS
+    core
+    codegen
+    target
+    AllTargetsAsmParsers
+    AllTargetsCodeGens
+    AllTargetsDescs
+    AllTargetsInfos
+)
+if(LLVM_LINK_LLVM_DYLIB)
+    llvm_config(chung USE_SHARED ${CHUNG_LLVM_COMPONENTS})
 else()
-    llvm_config(chung -21)
+    llvm_config(chung ${CHUNG_LLVM_COMPONENTS})
 endif()
 
 target_link_libraries(chung ${llvm_libs})

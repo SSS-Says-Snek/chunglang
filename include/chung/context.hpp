@@ -23,9 +23,10 @@ struct Context {
     llvm::IRBuilder<> builder;
     llvm::Instruction* variable_insert_point; // alloca
     std::unique_ptr<llvm::Module> module;
-    std::map<ResolvedDecl*, llvm::Value*> named_values;
+    std::map<ResolvedDecl*, llvm::Value*> named_values; // AllocaInst* and/or Argument*
     std::map<std::string, Type> declared_types;
     std::map<std::reference_wrapper<const Type>, llvm::Type*, std::less<const Type>> llvm_types; // NOLINT
+    std::vector<std::string> c_builtins;
 
     Context();
 

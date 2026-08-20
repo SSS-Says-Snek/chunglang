@@ -17,6 +17,16 @@ void print_float64(double float64) {
     printf("%f\n", float64);
 }
 
+using str = struct {
+    char* sigma;
+    int64_t len;
+};
+
+void print_string(str gurt) {
+    printf("%ld", gurt.len);
+    printf("%s", gurt.sigma);
+}
+
 // Raylib
 void init_window(int64_t width, int64_t height) {
     InitWindow(width, height, "My Chunglang Game!");
@@ -39,15 +49,19 @@ void clear_background() {
 }
 
 void draw_circle(int64_t x, int64_t y, int64_t radius, int64_t r, int64_t g, int64_t b) {
-    DrawCircle(x, y, radius, Color{static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), 255});
+    DrawCircle(x, y, radius,
+               Color{static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), 255});
 }
 
 void draw_rectangle(int64_t x, int64_t y, int64_t width, int64_t height, int64_t r, int64_t g, int64_t b) {
-    DrawRectangle(x, y, width, height, Color{static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), 255});
+    DrawRectangle(
+        x, y, width, height,
+        Color{static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), 255});
 }
 
 void draw_line(int64_t x, int64_t y, int64_t end_x, int64_t end_y, int64_t r, int64_t g, int64_t b) {
-    DrawLine(x, y, end_x, end_y, Color{static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), 255});
+    DrawLine(x, y, end_x, end_y,
+             Color{static_cast<unsigned char>(r), static_cast<unsigned char>(g), static_cast<unsigned char>(b), 255});
 }
 
 void draw_number(int64_t x, int64_t y, int64_t number, int64_t font_size) {

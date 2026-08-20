@@ -3,8 +3,8 @@
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/CFG.h>
 #include <llvm/IR/Constants.h>
+#include <llvm/IR/GlobalVariable.h>
 #include <llvm/IR/Instructions.h>
-
 
 void codegen_logical_operators(Context& ctx, llvm::BasicBlock* true_block, ResolvedExpr& bin,
                                llvm::BasicBlock* false_block) {
@@ -42,14 +42,26 @@ llvm::Value* codegen_comparison(Context& ctx, ResolvedExpr& condition) {
 llvm::Value* ResolvedVarDeclare::codegen(Context& ctx) {
     llvm::Function* current_function = ctx.builder.GetInsertBlock()->getParent();
 
-    llvm::AllocaInst* var = ctx.allocate_stack_variable(name, ctx.llvm_types.at(type));
+    if (false) { // Is string literal
+        llvm::AllocaInst* var = ctx.allocate_stack_variable(name, ctx.llvm_types.at(type));
 
-    if (expr) {
-        ctx.builder.CreateStore(expr->codegen(ctx), var);
+        // auto* str_var = ctx.builder.CreateGEP(Type *Ty, Value *Ptr, ArrayRef<Value *> IdxList)
+        llvm::Value* value = expr->codegen(ctx);
+        auto* cast_value = llvm::dyn_cast<llvm::ConstantStruct>(value);
+        ctx.builder.CreateExtractValue(value, 0);
+
+        ctx.named_values[this] = var;
+        return nullptr;
+    } else {
+        llvm::AllocaInst* var = ctx.allocate_stack_variable(name, ctx.llvm_types.at(type));
+
+        if (expr) {
+            ctx.builder.CreateStore(expr->codegen(ctx), var);
+        }
+
+        ctx.named_values[this] = var;
+        return nullptr;
     }
-
-    ctx.named_values[this] = var;
-    return nullptr;
 }
 
 llvm::Value* ResolvedParamDeclare::codegen(Context& /*ctx*/) {
@@ -296,8 +308,19 @@ llvm::Value* ResolvedCall::codegen(Context& ctx) {
     }
 
     std::vector<llvm::Value*> argument_values;
+    bool is_c_builtin = std::find(ctx.c_builtins.begin(), ctx.c_builtins.end(), callee->name) != ctx.c_builtins.end();
     for (auto&& arg : arguments) {
         llvm::Value* value = arg->codegen(ctx);
+        if (is_c_builtin && value->getType()->isStructTy()) {
+            value->print(llvm::outs());
+            if (auto* var_arg = dynamic_cast<ResolvedVariable*>(arg.get())) {
+                value = ctx.named_values[var_arg->declaration];
+            } else {
+                auto* struct_type = llvm::dyn_cast<llvm::StructType>(value->getType());
+                llvm::Value* tmp_alloca = ctx.allocate_stack_variable("", value->getType());
+                llvm::outs() << "apsihgjdsdhg";
+            }
+        }
         argument_values.emplace_back(value);
         if (!argument_values.back()) {
             return nullptr;
@@ -320,6 +343,33 @@ llvm::Value* ResolvedPrimitive::codegen(Context& ctx) {
             return llvm::ConstantFP::get(ctx.context, llvm::APFloat{float64});
         case Ty::BOOL:
             return ctx.builder.getInt1(boolean);
+        case Ty::STRING: {
+            auto* constant = llvm::ConstantDataArray::getString(ctx.context, string, false);
+            auto* array_type = llvm::ArrayType::get(llvm::Type::getInt8Ty(ctx.context), string.length());
+
+            auto* str_global = new llvm::GlobalVariable(*ctx.module, array_type, true,
+                                                        llvm::GlobalValue::PrivateLinkage, constant, "");
+            str_global->setAlignment(llvm::Align(1));
+            str_global->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
+
+            // auto* str_pointer = ctx.builder.CreateBitCast(constant, llvm::PointerType::get(ctx.context, 0));
+            auto* zero = llvm::ConstantInt::get(llvm::Type::getInt32Ty(ctx.context), 0);
+            auto* str_pointer = ctx.builder.CreateInBoundsGEP(str_global->getType(), constant, {zero, zero}, "str.ptr");
+
+            auto* struct_type = llvm::StructType::get(
+                ctx.context, {llvm::PointerType::get(ctx.context, 0), llvm::Type::getInt64Ty(ctx.context)});
+
+            auto* len_field = llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx.context), string.length());
+            llvm::Value* fat_pointer = llvm::UndefValue::get(struct_type);
+            // auto* ptrField = ctx.builder.CreateStructGEP(struct_type, fat_pointer, 0);
+            // ctx.builder.CreateStore(str_global, ptrField);
+            //
+            // auto* lenField = ctx.builder.CreateStructGEP(struct_type, fat_pointer, 1);
+            // ctx.builder.CreateStore(len_field, lenField);
+            fat_pointer = ctx.builder.CreateInsertValue(fat_pointer, str_global, 0);
+            fat_pointer = ctx.builder.CreateInsertValue(fat_pointer, len_field, 1);
+            return fat_pointer;
+        }
         default:
             // std::cout << "L\n";
             return nullptr;
@@ -342,7 +392,8 @@ llvm::Value* ResolvedVariable::codegen(Context& ctx) {
 llvm::Value* ResolvedAssignment::codegen(Context& ctx) {
     if (op != TokenType::ASSIGN) {
         ResolvedDecl* declaration = variable->declaration;
-        auto binop = ResolvedBinaryExpr{expr->loc, op, expr->type, std::move(variable), std::move(expr)}; // TODO: Expr->loc is probably incorrect, get the op's loc
+        auto binop = ResolvedBinaryExpr{expr->loc, op, expr->type, std::move(variable),
+                                        std::move(expr)}; // TODO: Expr->loc is probably incorrect, get the op's loc
         llvm::Value* expr = binop.codegen(ctx);
         return ctx.builder.CreateStore(expr, ctx.named_values[declaration]);
     }

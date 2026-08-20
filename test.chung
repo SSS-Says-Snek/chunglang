@@ -1,3 +1,4 @@
 func main() {
-    let e = "gurtrude😀";
+    let e = "gurt";
+    print_string(e);
 }

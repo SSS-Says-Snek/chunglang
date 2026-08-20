@@ -16,6 +16,8 @@ void setup_function(Context& ctx, const std::string& name, const std::vector<std
         arg.setName(params[i].first);
         i++;
     }
+    
+    ctx.c_builtins.push_back(name);
 }
 
 void setup_prelude(Context& ctx) {
@@ -25,7 +27,8 @@ void setup_prelude(Context& ctx) {
 
     setup_function(ctx, "print", {{"value", llvm::Type::getInt64Ty(ctx.context)}}, llvm::Type::getVoidTy(ctx.context));
     setup_function(ctx, "print_char", {{"value", llvm::Type::getInt64Ty(ctx.context)}}, llvm::Type::getVoidTy(ctx.context));
-    setup_function(ctx, "print_float_64", {{"value", llvm::Type::getDoubleTy(ctx.context)}}, llvm::Type::getVoidTy(ctx.context));
+    setup_function(ctx, "print_float64", {{"value", llvm::Type::getDoubleTy(ctx.context)}}, llvm::Type::getVoidTy(ctx.context));
+    setup_function(ctx, "print_string", {{"value", ctx.llvm_types.at(Type::string)}}, llvm::Type::getVoidTy(ctx.context));
 
     // Raylib
     setup_function(ctx, "init_window", {{"width", int64_type}, {"height", int64_type}}, void_type);

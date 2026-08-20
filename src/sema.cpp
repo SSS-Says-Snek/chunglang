@@ -532,6 +532,7 @@ std::vector<std::unique_ptr<ResolvedStmt>> Sema::fill_std_functions() {
     generate_std_function(std_resolved_ast, "print", {{"n", Type::int64}}, Type::void_);
     generate_std_function(std_resolved_ast, "print_char", {{"n", Type::int64}}, Type::void_);
     generate_std_function(std_resolved_ast, "print_float64", {{"n", Type::float64}}, Type::void_);
+    generate_std_function(std_resolved_ast, "print_string", {{"n", Type::string}}, Type::void_);
 
     // Raylib
     generate_std_function(std_resolved_ast, "init_window", {{"width", Type::int64}, {"height", Type::int64}},

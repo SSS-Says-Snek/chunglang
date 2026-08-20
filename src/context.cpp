@@ -13,7 +13,9 @@ Context::Context()
         {Type::int64, llvm::Type::getInt64Ty(context)},
         {Type::float64, llvm::Type::getDoubleTy(context)},
         {Type::void_, llvm::Type::getVoidTy(context)},
-        {Type::boolean, llvm::Type::getInt1Ty(context)}
+        {Type::boolean, llvm::Type::getInt1Ty(context)},
+        {Type::string,
+         llvm::StructType::get(context, {llvm::PointerType::get(context, 0), llvm::Type::getInt64Ty(context)})}
         // {Type::tstring, builder.getInt8PtrTy()}
     };
 }
